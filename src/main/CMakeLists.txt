@@ -10,7 +10,7 @@ file(GLOB_RECURSE MAIN_HEADERS CONFIGURE_DEPENDS
 
 add_executable(${PROJECT_NAME} ${MAIN_SOURCES} ${MAIN_HEADERS})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE vwz::vwzvk glm::glm zwindow)
+target_link_libraries(${PROJECT_NAME} PRIVATE vwz::vwzvk glm::glm zwin::zwindow)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/include"

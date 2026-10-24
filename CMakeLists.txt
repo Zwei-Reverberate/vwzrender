@@ -18,7 +18,6 @@ vwz_add_glm()
 include(${CMAKE_SOURCE_DIR}/cmake/addspdlog.cmake)
 vwz_add_spdlog()
 
-
 add_subdirectory(src/foundation)
 add_subdirectory(src/vwzvk)
 add_subdirectory(src/main)

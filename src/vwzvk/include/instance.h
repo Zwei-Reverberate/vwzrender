@@ -7,6 +7,7 @@
 #include <atomic>
 #include <cstdint>
 #include <string_view>
+#include <copymovepolicy.h>
 
 namespace zvk
 {
@@ -30,13 +31,10 @@ namespace zvk
 		std::vector<const char*> extraExtensions;
 	};
 
-	class Instance
+	class Instance : private vwz::core:: CopyMovePolicy<false>
 	{
 	public:
 		Instance() = default;
-
-		Instance(const Instance&) = delete;
-		Instance& operator=(const Instance&) = delete;
 
 		bool isValid() const { return m_instance != VK_NULL_HANDLE; }
 		VkInstance handle() const { return m_instance; }
