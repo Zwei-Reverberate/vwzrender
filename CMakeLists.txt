@@ -15,8 +15,10 @@ vwz_add_zwindow()
 include(${CMAKE_SOURCE_DIR}/cmake/addglm.cmake)
 vwz_add_glm()
 
-# 依赖顺序: foundation -> vwzvk -> main
-# vwzvk 链接 vwz::foundation, main 链接 vwz::vwzvk, 被依赖的目标必须先定义
+include(${CMAKE_SOURCE_DIR}/cmake/addspdlog.cmake)
+vwz_add_spdlog()
+
+
 add_subdirectory(src/foundation)
 add_subdirectory(src/vwzvk)
 add_subdirectory(src/main)

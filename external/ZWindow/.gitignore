@@ -1,9 +1,0 @@
-build/
-out/
-bin/
-lib/
-
-.vs/
-.idea/
-.vscode/
-*.user
