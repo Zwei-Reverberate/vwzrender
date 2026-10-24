@@ -1,0 +1,2082 @@
+================================================================================
+  vwzrender 工程源码单文件归档 (Source Bundle)
+================================================================================
+生成时间 : 2026-10-23 17:49:16
+工程名   : vwzrender
+收录文件 : 24 个，共 48408 字节
+已排除   : external/ (第三方依赖 ZWindow、glm)、out/、docs/、.vs/ 等构建与工具产物
+归档格式 : 纯 UTF-8 文本，可直接用记事本/VSCode 阅读
+
+--------------------------------------------------------------------------------
+【用途】
+--------------------------------------------------------------------------------
+  把整个工程的源码与 CMake 脚本收进一个纯文本文件，便于在任意设备上完整还原。
+  每个文件段记录原始编码、BOM、换行风格与 SHA-256，还原后可逐字节校验。
+
+--------------------------------------------------------------------------------
+【还原方法】
+--------------------------------------------------------------------------------
+  1. 把本文件与附录 A 的脚本放在同一目录；
+  2. 将“附录 A:restore.ps1”的内容另存为 restore.ps1；
+  3. 在同目录执行：
+       powershell -NoProfile -ExecutionPolicy Bypass -File .\restore.ps1
+     - 默认还原到 .\vwzrender
+     - 可用 -Destination 目录 指定其它位置
+     - 可用 -Bundle 文件 指定其它归档文件
+  4. 输出 “已还原 N 个文件” 且无 SHA-256 警告，即表示逐字节还原成功。
+
+  提示：本文件为 UTF-8 文本，若用记事本另存请保持 UTF-8（不要选 ANSI），
+        否则中文注释会被破坏，SHA-256 校验将失败。
+
+--------------------------------------------------------------------------------
+【关于 external/】
+--------------------------------------------------------------------------------
+  external/ 内为第三方依赖，未收录。恢复方式（任选其一）：
+  a) 由 CMake 自动拉取：直接配置工程即可，目录缺失时由 FetchContent 克隆固定提交：
+       cmake/addzwindow.cmake  https://github.com/Zwei-Reverberate/ZWindow.git
+                               c99f25cc910e5d11f1a1c313ff48cf062a9e99c2
+       cmake/addglm.cmake      https://github.com/g-truc/glm.git
+                               6f14f4792a0cde5d0cf2c910506724d61cb95834
+  b) 手动放置：将上述仓库检出到 external/ZWindow、external/glm，
+     CMake 检测到目录后直接 add_subdirectory，不再联网。
+
+--------------------------------------------------------------------------------
+【构建步骤】
+--------------------------------------------------------------------------------
+  cmake -S . -B out\build -G "Visual Studio 17 2022" -A x64
+  cmake --build out\build --config Debug
+  依赖：Vulkan SDK（find_package(Vulkan REQUIRED)，需设置 VULKAN_SDK）；
+        可选 Qt6/Qt5 Core、Gui（存在则 ZWindow 使用 Qt 后端，否则 Win32 后端）；
+        glm 由 cmake/addglm.cmake 提供，仅头文件使用。
+
+--------------------------------------------------------------------------------
+【文件清单】
+--------------------------------------------------------------------------------
+#    PATH                                       BYTES  LINES  ENC    BOM    NL     SHA256
+1    CMakeLists.txt                               566     20  utf-8  yes    crlf   54c9ade6c469bf9f776397b44936e4effe1cc49acd094cdaa32c9ab1d7dc8bfc
+2    cmake/addglm.cmake                          1443     36  utf-8  yes    crlf   9453aac8da2ceb22f20c41efe3c5117cedca4001139b481c587b8c74d61a4e6e
+3    cmake/addvulkan.cmake                        711     20  utf-8  yes    crlf   d0d035fb962b69f274546e43d620600019ab24638a62780ed1dbd838185f97b1
+4    cmake/addzwindow.cmake                      2228     64  utf-8  yes    crlf   8f7eed9402a62d2e29b4c653d973562a145c93a3d4a92e6113498742f055e75e
+5    cmake/compileroptions.cmake                 1688     35  utf-8  yes    crlf   00c5ca36af5a9f83cb15f13d309722925cc2cb5bb1a672b14809fbfdd6b6b683
+6    src/foundation/CMakeLists.txt                516     17  utf-8  yes    crlf   e1cbcbb178f4212d63b945d77173b0e08046f3cc83d22f3d335b55dbf91d70fa
+7    src/main/CMakeLists.txt                      649     24  utf-8  yes    crlf   923844291538ea71749633d667f5747bdf2d463a06e065c215d1387c240da099
+8    src/vwzvk/CMakeLists.txt                     640     22  utf-8  yes    crlf   f6362aefa10f1ac13c2e3ea73cbd09b728b34c8c88709e43b5aae7155adf1aa5
+9    src/foundation/include/log.h                1521     55  utf-8  yes    crlf   2207533ec7a2800338da2d6e141f177931aee779a51ccb92db74573bda88273a
+10   src/foundation/src/log.cpp                  2685    105  utf-8  yes    crlf   e7942cc39de98979bba5114c07b558b72dbde6c91ef80cd93eb1e934345ba8e9
+11   src/main/src/main.cpp                        246     16  utf-8  yes    crlf   0c63f5552cc61a626bdeca06fc0c552bc38b0708135dd50f7817d62b0f64dbe4
+12   src/vwzvk/include/instance.h                2127     73  utf-8  yes    crlf   cfb90a1f10f5aae69097d46d1cd4145c066852f95818bdcb9596c81134d93910
+13   src/vwzvk/include/physicaldevice.h           583     25  utf-8  yes    crlf   03f5b117b588d583c29498e7ff301430ce518218019bf26ce042a1279367e986
+14   src/vwzvk/src/instance.cpp                  9631    292  utf-8  yes    crlf   d2a6f7518db388b4900a8f4c72c2e9349e959874fa6703c05fccf6b1c669ce86
+15   src/vwzvk/src/physicaldevice.cpp            2808    110  utf-8  yes    crlf   545711837584847b4a8438042e8d3d2a2a44a7b92f83d8f0adfa4b62c0ed6494
+16   src/main/include/demo/demo1.h                410     23  utf-8  yes    crlf   c485646cc7677e3af2f163627af561c050f78f1378c69bad6d80a6fd6e231511
+17   src/main/include/demo/demo2.h                314     16  utf-8  yes    crlf   320c9f90666c04a27df58ea41e5ded8c5bf7d763ce756192c10e0f6772852549
+18   src/main/include/demo/demo3.h               1774     63  utf-8  yes    crlf   36b5bcd189dcd2ce7d23eded5af300855d141cc5ea3e589f313df29d621c339c
+19   src/main/include/demo/demo4.h                178     14  utf-8  yes    crlf   5e72ee95b50d0d4ba8d0f032ce1e03d11f31de60534bb4fe19a4da54051c8c68
+20   src/main/include/demo/demobase.h             161     14  utf-8  yes    crlf   4941cb8b819f46c6ff3236a6d186b7653675c8ff4df6d8cc009e534048bbd9de
+21   src/main/src/demo/demo1.cpp                 3676    142  utf-8  yes    crlf   81cc221c9c75d6a440f674356437223a10f68d8c82d5b6ee7e8a089b65c85fe6
+22   src/main/src/demo/demo2.cpp                 3033    122  utf-8  yes    crlf   f81eb9be532283ee40140e38a454d2007ed6038b784e50bb8cdbcf022a4959c2
+23   src/main/src/demo/demo3.cpp                 8704    225  utf-8  yes    crlf   6140cb53b4c3d3986b942e5dbefdbe4c2af543bf67708522d6b274a1b4b46205
+24   src/main/src/demo/demo4.cpp                 2116     63  utf-8  yes    crlf   4d6caa0784dd0706701485a057eb46ae8e6ab82292b3f7730293384b13f3fc50
+
+  格式说明：ENC 为原文编码（utf-8 表示 UTF-8，gbk 表示 GBK/CP936）；
+            BOM 为是否带 UTF-8 BOM（yes/no）；NL 为原文换行符（crlf / lf）。
+
+================================================================================
+  文件内容
+================================================================================
+
+=== FILE BEGIN ===
+path: CMakeLists.txt
+index: 1/24
+bytes: 566
+lines: 20
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 54c9ade6c469bf9f776397b44936e4effe1cc49acd094cdaa32c9ab1d7dc8bfc
+=== CONTENT ===
+cmake_minimum_required(VERSION 3.25)
+
+project(vwzrender LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# 统一编译选项(/utf-8、/W4 等), 通过 vwz_set_target_options(<target>) 应用到各目标
+include(${CMAKE_SOURCE_DIR}/cmake/compileroptions.cmake)
+
+include(${CMAKE_SOURCE_DIR}/cmake/addzwindow.cmake)
+vwz_add_zwindow()
+
+include(${CMAKE_SOURCE_DIR}/cmake/addglm.cmake)
+vwz_add_glm()
+
+add_subdirectory(src/main)
+add_subdirectory(src/foundation)
+add_subdirectory(src/vwzvk)
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: cmake/addglm.cmake
+index: 2/24
+bytes: 1443
+lines: 36
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 9453aac8da2ceb22f20c41efe3c5117cedca4001139b481c587b8c74d61a4e6e
+=== CONTENT ===
+include_guard(GLOBAL)
+
+function(vwz_add_glm)
+    if(TARGET glm::glm)
+        return()
+    endif()
+
+    set(VWZ_GLM_DIR "${CMAKE_SOURCE_DIR}/external/glm")
+    set(GLM_BUILD_LIBRARY OFF CACHE BOOL "not build glm library" FORCE)
+    set(GLM_BUILD_TESTS OFF CACHE BOOL "not build glm tests" FORCE)
+    set(GLM_BUILD_INSTALL OFF CACHE BOOL "not generate glm install rules" FORCE)
+
+    if(EXISTS "${VWZ_GLM_DIR}/glm/glm.hpp")
+        message(STATUS "glm source code already exists")
+        add_subdirectory("${VWZ_GLM_DIR}" "${CMAKE_BINARY_DIR}/_deps/glm-build")
+    else()
+        message(STATUS "fetch glm source code")
+        include(FetchContent)
+        FetchContent_Declare(glm
+            GIT_REPOSITORY https://github.com/g-truc/glm.git
+            GIT_TAG        6f14f4792a0cde5d0cf2c910506724d61cb95834
+            SOURCE_DIR     "${VWZ_GLM_DIR}"
+            UPDATE_DISCONNECTED TRUE
+        )
+        FetchContent_MakeAvailable(glm)
+    endif()
+
+    if(NOT TARGET glm::glm)
+        message(FATAL_ERROR "glm add failed")
+    endif()
+
+    # Vulkan 的规范化设备坐标深度范围为 [0, 1](OpenGL 传统为 [-1, 1])
+    # 该宏让 glm::perspective / glm::ortho 直接产出 Vulkan 风格深度
+    # 挂在 INTERFACE 目标上,所有链接 glm::glm 的翻译单元看到同一套数学约定(ODR 安全)
+    target_compile_definitions(glm INTERFACE GLM_FORCE_DEPTH_ZERO_TO_ONE)
+endfunction()
+
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: cmake/addvulkan.cmake
+index: 3/24
+bytes: 711
+lines: 20
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: d0d035fb962b69f274546e43d620600019ab24638a62780ed1dbd838185f97b1
+=== CONTENT ===
+include_guard(GLOBAL)
+
+find_package(Vulkan REQUIRED)
+if(NOT TARGET Vulkan::Vulkan)
+    message(FATAL_ERROR "Vulkan::Vulkan target not found. Is the Vulkan SDK installed and VULKAN_SDK set?")
+endif()
+
+# 将 vulkan 提升为全局可见
+set_target_properties(Vulkan::Vulkan PROPERTIES IMPORTED_GLOBAL TRUE)
+
+message(STATUS "Vulkan SDK found: ${Vulkan_INCLUDE_DIR}")
+
+function(link_vulkan TARGET_NAME)
+    if(NOT TARGET ${TARGET_NAME})
+        message(FATAL_ERROR "link_vulkan: target '${TARGET_NAME}' does not exist.")
+    endif()
+
+    target_link_libraries(${TARGET_NAME} PUBLIC Vulkan::Vulkan)
+    target_compile_definitions(${TARGET_NAME} PUBLIC VK_USE_PLATFORM_WIN32_KHR)
+endfunction()
+
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: cmake/addzwindow.cmake
+index: 4/24
+bytes: 2228
+lines: 64
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 8f7eed9402a62d2e29b4c653d973562a145c93a3d4a92e6113498742f055e75e
+=== CONTENT ===
+include_guard(GLOBAL)
+
+function(vwz_find_qt)
+	if(DEFINED ENV{QTDIR} AND NOT CMAKE_PREFIX_PATH)
+        set(CMAKE_PREFIX_PATH "$ENV{QTDIR}")
+    endif()
+
+    find_package(QT NAMES Qt6 Qt5 QUIET COMPONENTS Core Gui)
+    if(QT_VERSION_MAJOR)
+        find_package(Qt${QT_VERSION_MAJOR} QUIET COMPONENTS Core Gui)
+    endif()
+    
+    if(QT_VERSION_MAJOR AND TARGET Qt${QT_VERSION_MAJOR}::Core AND TARGET Qt${QT_VERSION_MAJOR}::Gui)
+        set(ZWIN_QT_FOUND TRUE PARENT_SCOPE)
+        set(ZWIN_QT_VERSION_MAJOR "${QT_VERSION_MAJOR}" PARENT_SCOPE)
+        set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}" PARENT_SCOPE)
+        message(STATUS "Found Qt${QT_VERSION_MAJOR} (Core, Gui)")
+    else()
+        set(ZWIN_QT_FOUND FALSE PARENT_SCOPE)
+        message(STATUS "Qt not found")
+    endif()
+endfunction()
+
+function(vwz_add_zwindow)
+    if(TARGET zwindow)
+        return()
+    endif()
+
+    set(VWZ_ZWINDOW_DIR "${CMAKE_SOURCE_DIR}/external/ZWindow")
+    set(ZWIN_QT_FOUND FALSE)
+    set(ZWINDOW_BUILD_EXAMPLE OFF CACHE BOOL "not build zwindow example" FORCE)
+
+    vwz_find_qt()
+
+    if(ZWIN_QT_FOUND)
+        set(ZWINDOW_BACKEND "Qt" CACHE STRING "zwindow use qt backend" FORCE)
+    else()
+         set(ZWINDOW_BACKEND "Win32" CACHE STRING "zwindow use win32 backend" FORCE)
+    endif()
+    set_property(CACHE ZWINDOW_BACKEND PROPERTY STRINGS Auto Qt Win32)
+
+    if(EXISTS "${VWZ_ZWINDOW_DIR}/CMakeLists.txt")
+        message(STATUS "zwindow source code already exists")
+        add_subdirectory("${VWZ_ZWINDOW_DIR}" "${CMAKE_BINARY_DIR}/_deps/zwindow-build")
+    else()
+        message(STATUS "fetch zwindow source code")
+        include(FetchContent)
+        FetchContent_Declare(zwindow
+            GIT_REPOSITORY https://github.com/Zwei-Reverberate/ZWindow.git
+            GIT_TAG        c99f25cc910e5d11f1a1c313ff48cf062a9e99c2
+            SOURCE_DIR     "${VWZ_ZWINDOW_DIR}"
+            UPDATE_DISCONNECTED TRUE
+        )
+        FetchContent_MakeAvailable(zwindow)
+    endif()
+
+    if(NOT TARGET zwindow)
+        message(FATAL_ERROR "zwindow add failed")
+    endif()
+
+    if(MSVC)
+        target_compile_options(zwindow PRIVATE /utf-8)
+    endif()
+endfunction()
+
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: cmake/compileroptions.cmake
+index: 5/24
+bytes: 1688
+lines: 35
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 00c5ca36af5a9f83cb15f13d309722925cc2cb5bb1a672b14809fbfdd6b6b683
+=== CONTENT ===
+include_guard(GLOBAL)
+
+# 为工程内目标统一应用编译选项,保证所有模块行为一致。
+# 用法:vwz_set_target_options(<target>)
+function(vwz_set_target_options TARGET_NAME)
+    if(NOT TARGET ${TARGET_NAME})
+        message(FATAL_ERROR "vwz_set_target_options: target '${TARGET_NAME}' does not exist.")
+    endif()
+
+    if(MSVC)
+        target_compile_options(${TARGET_NAME} PRIVATE
+            /utf-8            # 源码与执行字符集按 UTF-8 解释(中文注释/字符串的前提)
+            /W4               # 高警告等级
+            /permissive-      # 关闭 MSVC 宽容模式,严格贴合标准语义
+            /Zc:__cplusplus   # 让 __cplusplus 报告真实标准版本(C++20 而非 199711L)
+            /Zc:preprocessor  # 符合标准的预处理器(变参宏展开更可靠)
+            /EHsc             # C++ 标准异常模型
+            /MP               # 多进程并行编译
+        )
+        target_compile_options(${TARGET_NAME} PRIVATE "$<$<CONFIG:Release>:/O2>")
+
+        # 影响 Windows 头文件语义的宏必须传播给所有使用方(PUBLIC)
+        target_compile_definitions(${TARGET_NAME} PUBLIC
+            NOMINMAX           # 阻止 Windows 头定义 min/max 宏,避免与 std::min/max 冲突
+            WIN32_LEAN_AND_MEAN
+            UNICODE            # Win32 API 与资源宏走宽字符(W)版本
+            _UNICODE           # CRT/TCHAR 走宽字符版本
+        )
+        target_compile_definitions(${TARGET_NAME} PRIVATE
+            _CRT_SECURE_NO_WARNINGS
+        )
+    else()
+        target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra)
+    endif()
+endfunction()
+
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/foundation/CMakeLists.txt
+index: 6/24
+bytes: 516
+lines: 17
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: e1cbcbb178f4212d63b945d77173b0e08046f3cc83d22f3d335b55dbf91d70fa
+=== CONTENT ===
+project(foundation)
+
+file(GLOB_RECURSE FOUNDATION_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+)
+file(GLOB_RECURSE FOUNDATION_HEADERS CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+)
+
+add_library(${PROJECT_NAME} STATIC ${FOUNDATION_SOURCES} ${FOUNDATION_HEADERS})
+add_library(vwz::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+vwz_set_target_options(${PROJECT_NAME})
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/main/CMakeLists.txt
+index: 7/24
+bytes: 649
+lines: 24
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 923844291538ea71749633d667f5747bdf2d463a06e065c215d1387c240da099
+=== CONTENT ===
+project(main)
+
+file(GLOB_RECURSE MAIN_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+)
+
+file(GLOB_RECURSE MAIN_HEADERS CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+)
+
+add_executable(${PROJECT_NAME} ${MAIN_SOURCES} ${MAIN_HEADERS})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE vwz::vwzvk glm::glm zwindow)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    OUTPUT_NAME "vwzrender"
+    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
+
+vwz_set_target_options(${PROJECT_NAME})
+
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/vwzvk/CMakeLists.txt
+index: 8/24
+bytes: 640
+lines: 22
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: f6362aefa10f1ac13c2e3ea73cbd09b728b34c8c88709e43b5aae7155adf1aa5
+=== CONTENT ===
+project(vwzvk)
+
+file(GLOB_RECURSE VWZVK_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+)
+file(GLOB_RECURSE VWZVK_HEADERS CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+)
+
+add_library(${PROJECT_NAME} STATIC ${VWZVK_SOURCES} ${VWZVK_HEADERS})
+add_library(vwz::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC vwz::foundation)
+
+include(${CMAKE_SOURCE_DIR}/cmake/AddVulkan.cmake)
+link_vulkan(${PROJECT_NAME})
+
+vwz_set_target_options(${PROJECT_NAME})
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/foundation/include/log.h
+index: 9/24
+bytes: 1521
+lines: 55
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 2207533ec7a2800338da2d6e141f177931aee779a51ccb92db74573bda88273a
+=== CONTENT ===
+#pragma once
+
+#include <cstdint>
+#include <format>
+#include <source_location>
+#include <string_view>
+#include <utility>
+
+namespace vwz
+{
+	enum class LogLevel : std::uint8_t 
+	{
+		Debug = 0,
+		Info = 1,
+		Warn = 2,
+		Error = 3,
+	};
+
+#ifdef NDEBUG
+	inline constexpr LogLevel kDefaultLogLevel{ LogLevel::Info };
+#else
+	inline constexpr LogLevel kDefaultLogLevel{ LogLevel::Debug };
+#endif
+
+	namespace log
+	{
+		void init(LogLevel minLevel = kDefaultLogLevel);
+
+		void setLevel(LogLevel level);
+		LogLevel level();
+
+		bool isEnabled(LogLevel level);
+
+		namespace detail
+		{
+			void write(LogLevel level, const std::source_location& src, std::string_view message);
+
+			template <typename... Args>
+			void dispatch(LogLevel level, const std::source_location& src,
+				std::format_string<Args...> fmt, Args&&... args)
+			{
+				if (!isEnabled(level)) 
+				{
+					return;
+				}
+				write(level, src, std::format(fmt, std::forward<Args>(args)...));
+			}
+		}
+	}
+}
+
+#define VWZ_LOG_DEBUG(...) ::vwz::log::detail::dispatch(::vwz::LogLevel::Debug, ::std::source_location::current(), __VA_ARGS__)
+#define VWZ_LOG_INFO(...)  ::vwz::log::detail::dispatch(::vwz::LogLevel::Info,  ::std::source_location::current(), __VA_ARGS__)
+#define VWZ_LOG_WARN(...)  ::vwz::log::detail::dispatch(::vwz::LogLevel::Warn,  ::std::source_location::current(), __VA_ARGS__)
+#define VWZ_LOG_ERROR(...) ::vwz::log::detail::dispatch(::vwz::LogLevel::Error, ::std::source_location::current(), __VA_ARGS__)
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/foundation/src/log.cpp
+index: 10/24
+bytes: 2685
+lines: 105
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: e7942cc39de98979bba5114c07b558b72dbde6c91ef80cd93eb1e934345ba8e9
+=== CONTENT ===
+#include <log.h>
+#include <windows.h>
+#include <array>
+#include <atomic>
+#include <chrono>
+#include <cstdio>
+#include <ctime>
+#include <mutex>
+#include <string>
+
+namespace vwz::log 
+{
+	namespace 
+	{
+		std::atomic<LogLevel> g_minLevel{ kDefaultLogLevel };
+		std::mutex g_writeMutex;
+
+		bool g_colorEnabled{ false };
+
+		constexpr std::array<const char*, 4> s_levelNames{ "DEBUG", "INFO ", "WARN ", "ERROR" };
+		constexpr std::array<const char*, 4> s_levelColors{ "\x1b[90m", "\x1b[36m", "\x1b[33m", "\x1b[31m" };
+		constexpr const char* s_colorReset{ "\x1b[0m" };
+
+		std::string_view baseName(std::string_view path)
+		{
+			const auto pos = path.find_last_of("\\/");
+			return (pos == std::string_view::npos) ? path : path.substr(pos + 1);
+		}
+
+		std::string formatTimestamp()
+		{
+			const auto now = std::chrono::system_clock::now();
+			const std::time_t seconds = std::chrono::system_clock::to_time_t(now);
+			const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
+				now.time_since_epoch()) % 1000;
+
+			std::tm local{};
+			localtime_s(&local, &seconds);
+
+			return std::format("{:02}:{:02}:{:02}.{:03}",
+				local.tm_hour, local.tm_min, local.tm_sec, millis.count());
+		}
+
+	}
+
+	void init(LogLevel minLevel)
+	{
+		g_minLevel.store(minLevel, std::memory_order_relaxed);
+
+		const HANDLE stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		DWORD mode = 0;
+		if (stdoutHandle != INVALID_HANDLE_VALUE && GetConsoleMode(stdoutHandle, &mode)) 
+		{
+			SetConsoleOutputCP(CP_UTF8);
+			SetConsoleMode(stdoutHandle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+			g_colorEnabled = true;
+		}
+	}
+
+	void setLevel(LogLevel level)
+	{
+		g_minLevel.store(level, std::memory_order_relaxed);
+	}
+
+	LogLevel level()
+	{
+		return g_minLevel.load(std::memory_order_relaxed);
+	}
+
+	bool isEnabled(LogLevel level)
+	{
+		return level >= g_minLevel.load(std::memory_order_relaxed);
+	}
+
+	namespace detail 
+	{
+
+		void write(LogLevel level, const std::source_location& src, std::string_view message)
+		{
+			const auto index = static_cast<std::size_t>(level);
+
+			std::lock_guard lock(g_writeMutex);
+
+			// [HH:MM:SS.mmm] [LEVEL] [file:line] message
+			std::string line = std::format("[{}] ", formatTimestamp());
+			if (g_colorEnabled) 
+			{
+				line += s_levelColors[index];
+			}
+			line += std::format("[{}]", s_levelNames[index]);
+			if (g_colorEnabled) 
+			{
+				line += s_colorReset;
+			}
+			line += std::format(" [{}:{}] ", baseName(src.file_name()), src.line());
+			line += message;
+			line += '\n';
+
+			std::fwrite(line.data(), 1, line.size(), stdout);
+			std::fflush(stdout);
+		}
+
+	}
+
+}
+
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/main/src/main.cpp
+index: 11/24
+bytes: 246
+lines: 16
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 0c63f5552cc61a626bdeca06fc0c552bc38b0708135dd50f7817d62b0f64dbe4
+=== CONTENT ===
+#include <iostream>
+#include <demo/demo1.h>
+#include <demo/demo2.h>
+#include <demo/demo3.h>
+#include <demo/demo4.h>
+#include <log.h>
+
+int main()
+{
+	vwz::log::init();
+
+	demo::DemoBase<demo::Demo4> demo;
+	demo.run();
+
+	return 0;
+}
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/vwzvk/include/instance.h
+index: 12/24
+bytes: 2127
+lines: 73
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: cfb90a1f10f5aae69097d46d1cd4145c066852f95818bdcb9596c81134d93910
+=== CONTENT ===
+#pragma once
+
+#include <Windows.h>
+#include <vulkan/vulkan.h>
+#include <string>
+#include <vector>
+#include <atomic>
+#include <cstdint>
+#include <string_view>
+
+namespace zvk
+{
+	std::string_view resultName(VkResult result);
+
+	struct InstanceConfig 
+	{
+		std::string appName = "wvzrender";
+		std::uint32_t appVersion = VK_MAKE_API_VERSION(0, 0, 1, 0);
+		std::string engineName = "vwzrender";
+		std::uint32_t engineVersion = VK_MAKE_API_VERSION(0, 0, 1, 0);
+		std::uint32_t requestedApiVersion = VK_API_VERSION_1_3;
+
+#ifdef NDEBUG
+		bool enableValidation = false;
+#else
+		bool enableValidation = true;
+#endif
+
+		bool enableSurfaceExtensions = true;
+		std::vector<const char*> extraExtensions;
+	};
+
+	class Instance
+	{
+	public:
+		Instance() = default;
+
+		Instance(const Instance&) = delete;
+		Instance& operator=(const Instance&) = delete;
+
+		bool isValid() const { return m_instance != VK_NULL_HANDLE; }
+		VkInstance handle() const { return m_instance; }
+		std::uint32_t apiVersion() const { return m_apiVersion; }
+		bool validationEnabled() const { return m_validationEnabled; }
+		std::uint32_t errorCount() const { return m_errorCount.load(); }
+		std::uint32_t warningCount() const { return m_warningCount.load(); }
+
+		bool create(const InstanceConfig& config);
+		void destroy();
+
+	private:
+		std::vector<VkLayerProperties> enumerateInstanceLayers();
+		std::vector<VkExtensionProperties> enumerateInstanceExtensions();
+		bool isValidationLayerAvailable();
+
+		static VKAPI_ATTR VkBool32 VKAPI_CALL handleDebugMessage
+		(
+			VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+			VkDebugUtilsMessageTypeFlagsEXT type,
+			const VkDebugUtilsMessengerCallbackDataEXT* data,
+			void* userData
+		);
+		static std::string messageTypeText(VkDebugUtilsMessageTypeFlagsEXT type);
+		
+	private:
+		VkInstance m_instance = VK_NULL_HANDLE;
+		VkDebugUtilsMessengerEXT m_debugMessenger = VK_NULL_HANDLE;
+		std::atomic<std::uint32_t> m_errorCount{ 0 };
+		std::atomic<std::uint32_t> m_warningCount{ 0 };
+		std::uint32_t m_apiVersion = 0;
+		bool m_validationEnabled = false;
+	};
+}
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/vwzvk/include/physicaldevice.h
+index: 13/24
+bytes: 583
+lines: 25
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 03f5b117b588d583c29498e7ff301430ce518218019bf26ce042a1279367e986
+=== CONTENT ===
+#pragma once
+
+#include <vulkan/vulkan.h>
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <vector>
+
+namespace zvk
+{
+	struct PhysicalDeviceInfo 
+	{
+		VkPhysicalDevice handle = VK_NULL_HANDLE;
+		VkPhysicalDeviceProperties properties{};
+		std::vector<VkQueueFamilyProperties> queueFamilies;
+	};
+
+	std::vector<PhysicalDeviceInfo> enumeratePhysicalDevices(VkInstance instance);
+
+	std::string_view deviceTypeName(VkPhysicalDeviceType type);
+
+	std::string queueFlagsText(VkQueueFlags flags);
+
+	std::string versionText(std::uint32_t version);
+}
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/vwzvk/src/instance.cpp
+index: 14/24
+bytes: 9631
+lines: 292
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: d2a6f7518db388b4900a8f4c72c2e9349e959874fa6703c05fccf6b1c669ce86
+=== CONTENT ===
+#include <instance.h>
+#include <log.h>
+#include <algorithm>
+
+std::string_view zvk::resultName(VkResult result)
+{
+	switch (result) 
+	{
+	case VK_SUCCESS: return "VK_SUCCESS";
+	case VK_NOT_READY: return "VK_NOT_READY";
+	case VK_TIMEOUT: return "VK_TIMEOUT";
+	case VK_INCOMPLETE: return "VK_INCOMPLETE";
+	case VK_ERROR_OUT_OF_HOST_MEMORY: return "VK_ERROR_OUT_OF_HOST_MEMORY";
+	case VK_ERROR_OUT_OF_DEVICE_MEMORY: return "VK_ERROR_OUT_OF_DEVICE_MEMORY";
+	case VK_ERROR_INITIALIZATION_FAILED: return "VK_ERROR_INITIALIZATION_FAILED";
+	case VK_ERROR_DEVICE_LOST: return "VK_ERROR_DEVICE_LOST";
+	case VK_ERROR_LAYER_NOT_PRESENT: return "VK_ERROR_LAYER_NOT_PRESENT";
+	case VK_ERROR_EXTENSION_NOT_PRESENT: return "VK_ERROR_EXTENSION_NOT_PRESENT";
+	case VK_ERROR_FEATURE_NOT_PRESENT: return "VK_ERROR_FEATURE_NOT_PRESENT";
+	case VK_ERROR_INCOMPATIBLE_DRIVER: return "VK_ERROR_INCOMPATIBLE_DRIVER";
+	case VK_ERROR_SURFACE_LOST_KHR: return "VK_ERROR_SURFACE_LOST_KHR";
+	default: break;
+	}
+	return "VK_ERROR_<Other>";
+}
+
+bool zvk::Instance::create(const InstanceConfig& config)
+{
+	if (isValid()) 
+	{
+		VWZ_LOG_WARN("Instance has been created, ignoring duplicate calls.");
+		return true;
+	}
+
+	std::uint32_t runtimeVersion = VK_API_VERSION_1_0;
+	if (vkEnumerateInstanceVersion(&runtimeVersion) != VK_SUCCESS) 
+	{
+		runtimeVersion = VK_API_VERSION_1_0;
+	}
+	m_apiVersion = std::min(runtimeVersion, config.requestedApiVersion);
+	VWZ_LOG_INFO("API version negotiation: runtime {}.{}.{} / request {}.{}.{} -> using {}.{}.{}",
+	VK_API_VERSION_MAJOR(runtimeVersion), VK_API_VERSION_MINOR(runtimeVersion), VK_API_VERSION_PATCH(runtimeVersion),
+	VK_API_VERSION_MAJOR(config.requestedApiVersion), VK_API_VERSION_MINOR(config.requestedApiVersion), VK_API_VERSION_PATCH(config.requestedApiVersion),
+	VK_API_VERSION_MAJOR(m_apiVersion), VK_API_VERSION_MINOR(m_apiVersion), VK_API_VERSION_PATCH(m_apiVersion));
+
+
+	m_validationEnabled = config.enableValidation && isValidationLayerAvailable();
+	if (config.enableValidation && !m_validationEnabled) 
+	{
+		VWZ_LOG_WARN("Validation layer VK_LAYER_KHRONOS_validation is unavailable; falling back to running without validation.");
+	}
+	std::vector<const char*> enabledLayers;
+	if (m_validationEnabled) 
+	{
+		enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
+	}
+
+
+	std::vector<const char*> enabledExtensions;
+	if (m_validationEnabled) 
+	{
+		enabledExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	}
+	if (config.enableSurfaceExtensions) 
+	{
+		enabledExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);      
+		enabledExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+	}
+	for (const char* extra : config.extraExtensions) 
+	{
+		enabledExtensions.push_back(extra);
+	}
+
+
+	const std::vector<VkExtensionProperties> availableExtensions = enumerateInstanceExtensions();
+	for (const char* name : enabledExtensions) 
+	{
+		const bool found = std::any_of(availableExtensions.begin(), availableExtensions.end(),
+			[&](const VkExtensionProperties& e) { return std::string_view(e.extensionName) == name; });
+		if (!found) 
+		{
+			VWZ_LOG_ERROR("The requested instance extension is unavailable: {} (create aborted)", name);
+			return false;
+		}
+	}
+
+	VkDebugUtilsMessengerCreateInfoEXT debugInfo{};
+	debugInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	debugInfo.messageSeverity =
+		VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+		VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+		VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+		VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+	debugInfo.messageType =
+		VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+		VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+		VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+	debugInfo.pfnUserCallback = &Instance::handleDebugMessage;
+	debugInfo.pUserData = this;
+
+
+	VkApplicationInfo appInfo{};
+	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	appInfo.pApplicationName = config.appName.c_str();
+	appInfo.applicationVersion = config.appVersion;
+	appInfo.pEngineName = config.engineName.c_str();
+	appInfo.engineVersion = config.engineVersion;
+	appInfo.apiVersion = m_apiVersion;
+
+
+	VkInstanceCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	createInfo.pNext = m_validationEnabled ? &debugInfo : nullptr;
+	createInfo.pApplicationInfo = &appInfo;
+	createInfo.enabledLayerCount = static_cast<std::uint32_t>(enabledLayers.size());
+	createInfo.ppEnabledLayerNames = enabledLayers.data();
+	createInfo.enabledExtensionCount = static_cast<std::uint32_t>(enabledExtensions.size());
+	createInfo.ppEnabledExtensionNames = enabledExtensions.data();
+
+	const VkResult createResult = vkCreateInstance(&createInfo, nullptr, &m_instance);
+	if (createResult != VK_SUCCESS) 
+	{
+		m_instance = VK_NULL_HANDLE;
+		VWZ_LOG_ERROR("vkCreateInstance fail: {} ({})", resultName(createResult), static_cast<int>(createResult));
+		return false;
+	}
+
+	if (m_validationEnabled) 
+	{
+		const auto createMessenger = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_instance, "vkCreateDebugUtilsMessengerEXT"));
+		if (createMessenger != nullptr) 
+		{
+			const VkResult messengerResult = createMessenger(m_instance, &debugInfo, nullptr, &m_debugMessenger);
+			if (messengerResult != VK_SUCCESS) 
+			{
+				VWZ_LOG_WARN("Debug callback creation failed: {} — validation layer messages will only appear on stderr.", resultName(messengerResult));
+			}
+		}
+		else 
+		{
+			VWZ_LOG_WARN("Failed to load vkCreateDebugUtilsMessengerEXT — validation layer messages will only appear on stderr.");
+		}
+	}
+
+	VWZ_LOG_INFO("Instance created: {} layer(s) / {} extension(s).", enabledLayers.size(), enabledExtensions.size());
+	for (const char* name : enabledLayers) 
+	{
+		VWZ_LOG_INFO("  - layer: {}", name);
+	}
+	for (const char* name : enabledExtensions) 
+	{
+		VWZ_LOG_INFO("  - extension: {}", name);
+	}
+
+	return true;
+}
+
+void zvk::Instance::destroy()
+{
+	if (m_debugMessenger != VK_NULL_HANDLE) 
+	{
+		const auto destroyMessenger = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_instance, "vkDestroyDebugUtilsMessengerEXT"));
+		if (destroyMessenger != nullptr) 
+		{
+			destroyMessenger(m_instance, m_debugMessenger, nullptr);
+		}
+		m_debugMessenger = VK_NULL_HANDLE;
+	}
+
+	if (m_instance != VK_NULL_HANDLE) 
+	{
+		vkDestroyInstance(m_instance, nullptr);
+		m_instance = VK_NULL_HANDLE;
+	}
+	m_validationEnabled = false;
+}
+
+
+std::vector<VkLayerProperties>zvk::Instance::enumerateInstanceLayers()
+{
+	std::uint32_t count = 0;
+	if (vkEnumerateInstanceLayerProperties(&count, nullptr) != VK_SUCCESS || count == 0)
+	{
+		return {};
+	}
+
+	std::vector<VkLayerProperties> layers(count);
+	const VkResult result = vkEnumerateInstanceLayerProperties(&count, layers.data());
+	if (result != VK_SUCCESS && result != VK_INCOMPLETE)
+	{
+		return {};
+	}
+	layers.resize(count);
+	return layers;
+}
+
+std::vector<VkExtensionProperties>zvk::Instance::enumerateInstanceExtensions()
+{
+	std::uint32_t count = 0;
+	if (vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr) != VK_SUCCESS || count == 0) 
+	{
+		return {};
+	}
+	std::vector<VkExtensionProperties> extensions(count);
+	const VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &count, extensions.data());
+	if (result != VK_SUCCESS && result != VK_INCOMPLETE) 
+	{
+		return {};
+	}
+	extensions.resize(count);
+	return extensions;
+}
+
+bool zvk::Instance::isValidationLayerAvailable()
+{
+	for (const VkLayerProperties& layer : enumerateInstanceLayers()) 
+	{
+		if (std::string_view(layer.layerName) == "VK_LAYER_KHRONOS_validation") 
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL zvk::Instance::handleDebugMessage
+(
+	VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+	VkDebugUtilsMessageTypeFlagsEXT type,
+	const VkDebugUtilsMessengerCallbackDataEXT* data,
+	void* userData
+)
+{
+	Instance& self = *static_cast<Instance*>(userData);
+
+	const char* messageId = (data != nullptr && data->pMessageIdName != nullptr) ? data->pMessageIdName : "-";
+	const char* message = (data != nullptr && data->pMessage != nullptr) ? data->pMessage : "(empty message)";
+	const std::string typeText = messageTypeText(type);
+
+	if (severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) 
+	{
+		self.m_errorCount.fetch_add(1, std::memory_order_relaxed);
+		VWZ_LOG_ERROR("[vk/{}] {}: {}", typeText, messageId, message);
+	}
+	else if (severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) 
+	{
+		self.m_warningCount.fetch_add(1, std::memory_order_relaxed);
+		VWZ_LOG_WARN("[vk/{}] {}: {}", typeText, messageId, message);
+	}
+	else if (severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) 
+	{
+		VWZ_LOG_INFO("[vk/{}] {}: {}", typeText, messageId, message);
+	}
+	else 
+	{
+		VWZ_LOG_DEBUG("[vk/{}] {}: {}", typeText, messageId, message);
+	}
+
+	return VK_FALSE;
+}
+
+std::string zvk::Instance::messageTypeText(VkDebugUtilsMessageTypeFlagsEXT type)
+{
+	std::string text;
+	const auto append = [&text](const char* part) 
+	{
+		if (!text.empty()) 
+		{
+			text += '+';
+		}
+		text += part;
+	};
+
+	if (type & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) 
+	{
+		append("general");
+	}
+	if (type & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) 
+	{
+		append("validation");
+	}
+	if (type & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) 
+	{
+		append("performance");
+	}
+	if (text.empty()) 
+	{
+		text = "unknown";
+	}
+
+	return text;
+}
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/vwzvk/src/physicaldevice.cpp
+index: 15/24
+bytes: 2808
+lines: 110
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 545711837584847b4a8438042e8d3d2a2a44a7b92f83d8f0adfa4b62c0ed6494
+=== CONTENT ===
+#include <physicaldevice.h>
+#include <instance.h>
+#include <log.h>
+
+std::vector<zvk::PhysicalDeviceInfo> zvk::enumeratePhysicalDevices(VkInstance instance)
+{
+	std::vector<PhysicalDeviceInfo> devices;
+
+	std::uint32_t count = 0;
+	VkResult result = vkEnumeratePhysicalDevices(instance, &count, nullptr);
+	if (result != VK_SUCCESS) 
+	{
+		VWZ_LOG_ERROR("vkEnumeratePhysicalDevices (count) failed: {} ({})", resultName(result), static_cast<int>(result));
+		return devices;
+	}
+	if (count == 0) 
+	{
+		VWZ_LOG_ERROR("No physical devices found (no usable Vulkan implementation on the system)");
+		return devices;
+	}
+
+	std::vector<VkPhysicalDevice> handles(count);
+	result = vkEnumeratePhysicalDevices(instance, &count, handles.data());
+	if (result != VK_SUCCESS && result != VK_INCOMPLETE) 
+	{
+		VWZ_LOG_ERROR("vkEnumeratePhysicalDevices (fill) failed: {} ({})", resultName(result), static_cast<int>(result));
+		return devices;
+	}
+	handles.resize(count);
+
+	devices.reserve(handles.size());
+	for (const VkPhysicalDevice handle : handles) 
+	{
+		PhysicalDeviceInfo info;
+		info.handle = handle;
+
+		vkGetPhysicalDeviceProperties(handle, &info.properties);
+
+		std::uint32_t familyCount = 0;
+		vkGetPhysicalDeviceQueueFamilyProperties(handle, &familyCount, nullptr);
+		info.queueFamilies.resize(familyCount);
+		if (familyCount > 0) 
+		{
+			vkGetPhysicalDeviceQueueFamilyProperties(handle, &familyCount, info.queueFamilies.data());
+			info.queueFamilies.resize(familyCount);
+		}
+
+		devices.push_back(std::move(info));
+	}
+	return devices;
+}
+
+std::string_view zvk::deviceTypeName(VkPhysicalDeviceType type)
+{
+	switch (type) 
+	{
+	case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU: return "Integrated GPU";
+	case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU: return "Discrete GPU";
+	case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU: return "Virtual GPU";
+	case VK_PHYSICAL_DEVICE_TYPE_CPU: return "CPU software implementation";
+	default: break;
+	}
+	return "Other";
+}
+
+std::string zvk::queueFlagsText(VkQueueFlags flags)
+{
+	std::string text;
+	const auto append = [&text](const char* part) 
+	{
+		if (!text.empty()) 
+		{
+			text += '|';
+		}
+		text += part;
+	};
+	if (flags & VK_QUEUE_GRAPHICS_BIT) 
+	{
+		append("graphics");
+	}
+	if (flags & VK_QUEUE_COMPUTE_BIT) 
+	{
+		append("compute");
+	}
+	if (flags & VK_QUEUE_TRANSFER_BIT) 
+	{
+		append("transfer");
+	}
+	if (flags & VK_QUEUE_SPARSE_BINDING_BIT) 
+	{
+		append("sparse binding");
+	}
+	if (flags & VK_QUEUE_PROTECTED_BIT) 
+	{
+		append("protected");
+	}
+	if (text.empty()) 
+	{
+		text = "none";
+	}
+	return text;
+}
+
+std::string zvk::versionText(std::uint32_t version)
+{
+	return std::format("{}.{}.{}",
+	VK_API_VERSION_MAJOR(version),
+	VK_API_VERSION_MINOR(version),
+	VK_API_VERSION_PATCH(version));
+}
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/main/include/demo/demo1.h
+index: 16/24
+bytes: 410
+lines: 23
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: c485646cc7677e3af2f163627af561c050f78f1378c69bad6d80a6fd6e231511
+=== CONTENT ===
+#pragma once
+
+#include <string>
+#include <format>
+#include <Windows.h>
+#include <vulkan/vulkan.h>
+#include <demo/demobase.h>
+
+namespace demo
+{
+	class Demo1 : public DemoBase<Demo1>
+	{
+	private:
+		const char* buildConfigName();
+		std::string compilerName();
+		const char* architectureName();
+		std::string windowsVersion();
+		void probeVulkanRuntime();
+
+	public:
+		void runImpl();
+	};
+}
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/main/include/demo/demo2.h
+index: 17/24
+bytes: 314
+lines: 16
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 320c9f90666c04a27df58ea41e5ded8c5bf7d763ce756192c10e0f6772852549
+=== CONTENT ===
+#pragma once
+#include <demo/demobase.h>
+#include <memory>
+#include <zwindow.h>
+
+namespace demo
+{
+	std::unique_ptr<zwin::ZWindow> createDemoWindow(const char* title);
+	const char* mouseButtonName(zwin::MouseButton button);
+
+	class Demo2 : public DemoBase<Demo2>
+	{
+	public:
+		void runImpl();
+	};
+}
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/main/include/demo/demo3.h
+index: 18/24
+bytes: 1774
+lines: 63
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 36b5bcd189dcd2ce7d23eded5af300855d141cc5ea3e589f313df29d621c339c
+=== CONTENT ===
+#pragma once
+#include <demo/demobase.h>
+#include <string>
+#include <array>
+#include <glm/glm.hpp>
+#include <glm/gtc/epsilon.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+namespace demo
+{
+	constexpr float kEps = 1e-5f;
+
+	std::string formatVec3(const glm::vec3& v);
+	std::string formatVec4(const glm::vec4& v);
+	glm::vec3 transformPoint(const glm::mat4& m, const glm::vec3& p);
+
+	struct MathCheck 
+	{
+		std::uint32_t total{ 0 };
+		std::uint32_t passed{ 0 };
+
+		void record(std::string_view name, bool ok, const std::string& detail);
+		void number(std::string_view name, float actual, float expected);
+		void vec3(std::string_view name, const glm::vec3& actual, const glm::vec3& expected);
+		void vec4(std::string_view name, const glm::vec4& actual, const glm::vec4& expected);
+	};
+
+	struct CubeEdge
+	{
+		std::uint8_t a;
+		std::uint8_t b;
+	};
+
+	constexpr std::array<CubeEdge, 12> kCubeEdges = 
+	{
+		CubeEdge{ 0, 1 }, CubeEdge{ 1, 2 }, CubeEdge{ 2, 3 }, CubeEdge{ 3, 0 },
+		CubeEdge{ 4, 5 }, CubeEdge{ 5, 6 }, CubeEdge{ 6, 7 }, CubeEdge{ 7, 4 },
+		CubeEdge{ 0, 4 }, CubeEdge{ 1, 5 }, CubeEdge{ 2, 6 }, CubeEdge{ 3, 7 },
+	};
+
+	constexpr std::array<glm::vec3, 8> kCubeVertices = 
+	{
+	    glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(0.5f, -0.5f, -0.5f),
+	    glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(-0.5f, 0.5f, -0.5f),
+	    glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(0.5f, -0.5f, 0.5f),
+	    glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(-0.5f, 0.5f, 0.5f),
+	};
+
+
+	class Demo3 : public DemoBase<Demo3>
+	{
+	private:
+		bool projectToViewport(const glm::mat4& mvp, const glm::vec3& p,
+			std::uint32_t width, std::uint32_t height, glm::vec2& out);
+
+		void runMathCheck();
+		void runCubeCheck();
+
+	public:
+		void runImpl();
+
+	};
+}
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/main/include/demo/demo4.h
+index: 19/24
+bytes: 178
+lines: 14
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 5e72ee95b50d0d4ba8d0f032ce1e03d11f31de60534bb4fe19a4da54051c8c68
+=== CONTENT ===
+#pragma once
+#include <demo/demobase.h>
+
+namespace demo
+{
+	class Demo4 : public DemoBase<Demo4>
+	{
+	private:
+		void runVkInfo();
+
+	public:
+		void runImpl();
+	};
+}
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/main/include/demo/demobase.h
+index: 20/24
+bytes: 161
+lines: 14
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 4941cb8b819f46c6ff3236a6d186b7653675c8ff4df6d8cc009e534048bbd9de
+=== CONTENT ===
+#pragma once
+
+namespace demo
+{
+	template<typename T>
+	class DemoBase
+	{
+	public:
+		void run() 
+		{
+			static_cast<T*>(this)->runImpl();
+		}
+	};
+}
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/main/src/demo/demo1.cpp
+index: 21/24
+bytes: 3676
+lines: 142
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 81cc221c9c75d6a440f674356437223a10f68d8c82d5b6ee7e8a089b65c85fe6
+=== CONTENT ===
+#include <demo/demo1.h>
+#include <log.h>
+#include <vector>
+
+const char* demo::Demo1::buildConfigName()
+{
+#ifdef NDEBUG
+	return "Release";
+#else
+	return "Debug";
+#endif
+}
+
+std::string demo::Demo1::compilerName()
+{
+#if defined(_MSC_VER)
+	return std::format("MSVC {}.{} (Visual Studio 2022)", _MSC_VER / 100, _MSC_VER % 100);
+#else
+	return "unknown compiler";
+#endif
+}
+
+const char* demo::Demo1::architectureName()
+{
+#if defined(_M_X64)
+	return "x64";
+#elif defined(_M_ARM64)
+	return "ARM64";
+#else
+	return "unknown";
+#endif
+}
+
+std::string demo::Demo1::windowsVersion()
+{
+	using RtlGetVersionFn = LONG(WINAPI*)(PRTL_OSVERSIONINFOW);
+
+	const HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+	if (ntdll == nullptr)
+	{
+		return "unknown";
+	}
+
+	const auto rtlGetVersion = reinterpret_cast<RtlGetVersionFn>(
+		GetProcAddress(ntdll, "RtlGetVersion"));
+	if (rtlGetVersion == nullptr)
+	{
+		return "unknown";
+	}
+
+	RTL_OSVERSIONINFOW info{};
+	info.dwOSVersionInfoSize = sizeof(info);
+	if (rtlGetVersion(&info) != 0)
+	{
+		return "unknown";
+	}
+
+	return std::format("Windows {}.{} (build {})",
+		info.dwMajorVersion, info.dwMinorVersion, info.dwBuildNumber);
+}
+
+void demo::Demo1::probeVulkanRuntime()
+{
+	VWZ_LOG_INFO("");
+	VWZ_LOG_INFO("---- Vulkan 运行时探测 ----");
+
+	std::uint32_t apiVersion = 0;
+	VkResult result = vkEnumerateInstanceVersion(&apiVersion);
+	if (result != VK_SUCCESS) 
+	{
+		VWZ_LOG_ERROR("vkEnumerateInstanceVersion 失败,错误码 {}", static_cast<int>(result));
+		return;
+	}
+
+	VWZ_LOG_INFO("运行时 API 版本: {}.{}.{} (variant {})",
+		VK_API_VERSION_MAJOR(apiVersion),
+		VK_API_VERSION_MINOR(apiVersion),
+		VK_API_VERSION_PATCH(apiVersion),
+		VK_API_VERSION_VARIANT(apiVersion));
+
+	std::uint32_t extensionCount = 0;
+	result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+	if (result != VK_SUCCESS) 
+	{
+		VWZ_LOG_ERROR("枚举实例扩展失败,错误码 {}", static_cast<int>(result));
+		return;
+	}
+
+	std::vector<VkExtensionProperties> extensions(extensionCount);
+	result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+	if (result != VK_SUCCESS) 
+	{
+		VWZ_LOG_ERROR("获取实例扩展列表失败,错误码 {}", static_cast<int>(result));
+		return;
+	}
+
+	VWZ_LOG_INFO("可用实例扩展: {} 个", extensionCount);
+	for (const auto& extension : extensions) 
+	{
+		VWZ_LOG_INFO("  - {} (spec {})", extension.extensionName, extension.specVersion);
+	}
+
+	std::uint32_t layerCount = 0;
+	result = vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+	if (result != VK_SUCCESS) 
+	{
+		VWZ_LOG_ERROR("枚举实例层失败,错误码 {}", static_cast<int>(result));
+		return;
+	}
+
+	std::vector<VkLayerProperties> layers(layerCount);
+	result = vkEnumerateInstanceLayerProperties(&layerCount, layers.data());
+	if (result != VK_SUCCESS) 
+	{
+		VWZ_LOG_ERROR("获取实例层列表失败,错误码 {}", static_cast<int>(result));
+		return;
+	}
+
+	VWZ_LOG_INFO("可用实例层: {} 个", layerCount);
+
+	bool validationFound = false;
+	for (const auto& layer : layers) 
+	{
+		const bool isValidation = (std::string_view(layer.layerName) == "VK_LAYER_KHRONOS_validation");
+		validationFound = validationFound || isValidation;
+		VWZ_LOG_INFO("  - {} (spec {}){}", layer.layerName, layer.specVersion, "");
+	}
+
+	if (validationFound) 
+	{
+		VWZ_LOG_INFO("VK_LAYER_KHRONOS_validation: 可用");
+	}
+	else 
+	{
+		VWZ_LOG_WARN("未找到 VK_LAYER_KHRONOS_validation,请确认安装了 Vulkan SDK 且层注册正常");
+	}
+}
+
+void demo::Demo1::runImpl()
+{
+	probeVulkanRuntime();
+}
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/main/src/demo/demo2.cpp
+index: 22/24
+bytes: 3033
+lines: 122
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: f81eb9be532283ee40140e38a454d2007ed6038b784e50bb8cdbcf022a4959c2
+=== CONTENT ===
+#include <demo/demo2.h>
+#include <log.h>
+
+const char* demo::mouseButtonName(zwin::MouseButton button)
+{
+	switch (button) 
+	{
+	case zwin::MouseButton::Left:
+		return "左";
+	case zwin::MouseButton::Right:
+		return "右";
+	case zwin::MouseButton::Middle:
+		return "中";
+	case zwin::MouseButton::X1:
+		return "侧1";
+	case zwin::MouseButton::X2:
+		return "侧2";
+	}
+	return "?";
+}
+
+std::unique_ptr<zwin::ZWindow> demo::createDemoWindow(const char* title)
+{
+	auto window = zwin::ZWindow::Create
+	({
+		.title = title,
+		.width = 1920,
+		.height = 1080,
+	});
+	if (window == nullptr) 
+	{
+		VWZ_LOG_ERROR("窗口创建失败");
+		return nullptr;
+	}
+
+	window->onClose = [] 
+	{
+		VWZ_LOG_INFO("[事件] 关闭请求(WM_CLOSE)——延迟销毁:退出主循环后再销毁窗口");
+	};
+
+	window->onResize = [](std::uint32_t width, std::uint32_t height) 
+	{
+		VWZ_LOG_INFO("[事件] 尺寸变化: {}x{}", width, height);
+	};
+
+	zwin::ZWindow* const self = window.get();
+	window->onKey = [self](zwin::Key key, bool down, bool repeat, zwin::KeyMod) 
+	{
+		if (down && !repeat && key == zwin::Key::Escape) 
+		{
+			VWZ_LOG_INFO("[事件] ESC 按下,请求关闭");
+			self->requestClose();
+			return;
+		}
+		VWZ_LOG_INFO("[事件] 按键 {}: Key=0x{:02X}{}", down ? "按下" : "抬起",
+			static_cast<std::uint16_t>(key), repeat ? "(按住重复)" : "");
+	};
+
+	window->onChar = [](char32_t codepoint) 
+	{
+		if (codepoint < 128) 
+		{
+			VWZ_LOG_INFO("[事件] 字符输入: U+{:04X} ('{}')",
+				static_cast<std::uint32_t>(codepoint), static_cast<char>(codepoint));
+		}
+		else 
+		{
+			VWZ_LOG_INFO("[事件] 字符输入: U+{:04X}", static_cast<std::uint32_t>(codepoint));
+		}
+	};
+
+	window->onMouseButton = [](zwin::MouseButton button, bool down, zwin::KeyMod) 
+	{
+		VWZ_LOG_INFO("[事件] 鼠标{}键 {}", mouseButtonName(button), down ? "按下" : "抬起");
+	};
+
+	// 鼠标移动频率很高:节流记录(每 32 次记一条),证明事件在持续到达
+	window->onMouseMove = [moveCounter = std::uint32_t{ 0 }](std::int32_t x, std::int32_t y, zwin::KeyMod ) mutable 
+	{
+		if (++moveCounter % 32 == 1) 
+		{
+			VWZ_LOG_INFO("[事件] 鼠标移动: ({}, {})  [累计 {} 次]", x, y, moveCounter);
+		}
+	};
+
+	window->onMouseWheel = [](std::int32_t deltaX, std::int32_t deltaY) 
+	{
+		VWZ_LOG_INFO("[事件] 滚轮: dx={} dy={}", deltaX, deltaY);
+	};
+
+	if (!window->show()) 
+	{
+		VWZ_LOG_ERROR("窗口显示失败");
+		return nullptr;
+	}
+
+	return window;
+}
+
+
+
+void demo::Demo2::runImpl()
+{
+	zwin::Application app{0, nullptr};
+
+	auto window = createDemoWindow("ZWindow — 第 2 课:Win32 原生窗口");
+	if (window == nullptr) 
+	{
+		return;
+	}
+
+	VWZ_LOG_INFO("进入事件循环(点击标题栏 X 或按 ESC 退出;拖动边框观察尺寸事件)");
+
+	std::uint32_t rounds = 0;
+	while (window->processEvents()) 
+	{
+		++rounds;
+		window->waitEvents();
+	}
+
+	VWZ_LOG_INFO("主循环退出(共 {} 轮消息),销毁窗口", rounds);
+}
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/main/src/demo/demo3.cpp
+index: 23/24
+bytes: 8704
+lines: 225
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 6140cb53b4c3d3986b942e5dbefdbe4c2af543bf67708522d6b274a1b4b46205
+=== CONTENT ===
+#include <demo/demo3.h>
+#include <demo/demo2.h>
+#include <format>
+#include <log.h>
+#include <chrono>
+#include <Windows.h>
+#include <zwindow.h>
+
+std::string demo::formatVec3(const glm::vec3& v)
+{
+	return std::format("({:.4f}, {:.4f}, {:.4f})", v.x, v.y, v.z);
+}
+
+std::string demo::formatVec4(const glm::vec4& v)
+{
+	return std::format("({:.4f}, {:.4f}, {:.4f}, {:.4f})", v.x, v.y, v.z, v.w);
+}
+
+glm::vec3 demo::transformPoint(const glm::mat4& m, const glm::vec3& p)
+{
+	return glm::vec3(m * glm::vec4(p, 1.0f));
+}
+
+void demo::MathCheck::record(std::string_view name, bool ok, const std::string& detail)
+{
+	++total;
+	passed += ok ? 1u : 0u;
+	VWZ_LOG_INFO("[数学验证] {:02} {} | {} | {}", total, name, detail, ok ? "通过" : "失败 <--");
+}
+
+void demo::MathCheck::number(std::string_view name, float actual, float expected)
+{
+	record(name, std::abs(actual - expected) <= kEps,
+		std::format("= {:.4f},期望 {:.4f}", actual, expected));
+}
+
+void demo::MathCheck::vec3(std::string_view name, const glm::vec3& actual, const glm::vec3& expected)
+{
+	record(name, glm::all(glm::epsilonEqual(actual, expected, kEps)),
+		std::format("= {},期望 {}", formatVec3(actual), formatVec3(expected)));
+}
+
+void demo::MathCheck::vec4(std::string_view name, const glm::vec4& actual, const glm::vec4& expected)
+{
+	record(name, glm::all(glm::epsilonEqual(actual, expected, kEps)),
+		std::format("= {},期望 {}", formatVec4(actual), formatVec4(expected)));
+}
+
+void demo::Demo3::runMathCheck()
+{
+	VWZ_LOG_INFO("");
+	VWZ_LOG_INFO("---- 数学验证(第 3 课):手算对照 ----");
+	MathCheck check;
+
+	const glm::vec3 a(1.0f, 2.0f, 3.0f);
+	const glm::vec3 b(4.0f, -5.0f, 6.0f);
+	check.number("length(3,4,0) = 5", glm::length(glm::vec3(3.0f, 4.0f, 0.0f)), 5.0f);
+	check.number("dot((1,2,3),(4,-5,6)) = 12", glm::dot(a, b), 12.0f);
+	check.vec3("cross((1,0,0),(0,1,0)) = (0,0,1)",
+		glm::cross(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+		glm::vec3(0.0f, 0.0f, 1.0f));
+	check.vec3("normalize(0,3,4) = (0,0.6,0.8)", glm::normalize(glm::vec3(0.0f, 3.0f, 4.0f)),
+		glm::vec3(0.0f, 0.6f, 0.8f));
+
+	// 旋转与复合(列向量约定:v' = Mv,先做的变换写在右边)
+	const glm::mat4 rotZ90 = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	const glm::mat4 rotY90 = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	const glm::mat4 moveT = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 2.0f, 0.0f));
+	check.vec3("Rz(90) * (1,0,0) = (0,1,0)", transformPoint(rotZ90, glm::vec3(1.0f, 0.0f, 0.0f)),
+		glm::vec3(0.0f, 1.0f, 0.0f));
+	check.vec3("Ry(90) * (1,0,0) = (0,0,-1)", transformPoint(rotY90, glm::vec3(1.0f, 0.0f, 0.0f)),
+		glm::vec3(0.0f, 0.0f, -1.0f));
+	check.vec3("T(1,2,0) * Rz(90):先转后移 (1,0,0) -> (1,3,0)",
+		transformPoint(moveT * rotZ90, glm::vec3(1.0f, 0.0f, 0.0f)), glm::vec3(1.0f, 3.0f, 0.0f));
+	check.vec3("Rz(90) * T(1,2,0):先移后转 (1,0,0) -> (-2,2,0)",
+		transformPoint(rotZ90 * moveT, glm::vec3(1.0f, 0.0f, 0.0f)), glm::vec3(-2.0f, 2.0f, 0.0f));
+
+	// 齐次坐标:平移只作用于点 (w = 1),不影响方向 (w = 0)
+	const glm::mat4 moveTo = glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 20.0f, 30.0f));
+	check.vec4("T(10,20,30) 作用于点 (1,2,3,1)", moveTo * glm::vec4(1.0f, 2.0f, 3.0f, 1.0f),
+		glm::vec4(11.0f, 22.0f, 33.0f, 1.0f));
+	check.vec4("T(10,20,30) 作用于方向 (1,2,3,0)", moveTo * glm::vec4(1.0f, 2.0f, 3.0f, 0.0f),
+		glm::vec4(1.0f, 2.0f, 3.0f, 0.0f));
+
+	// 相机与投影
+	const glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f));
+	check.vec4("lookAt:世界原点在观察空间 = (0,0,-3,1)", view * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+		glm::vec4(0.0f, 0.0f, -3.0f, 1.0f));
+
+	const glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1.0f, 1.0f, 100.0f);
+	const auto ndc = [&proj](const glm::vec4& p)
+		{
+			const glm::vec4 clip = proj * p;
+			return glm::vec3(clip) / clip.w;
+		};
+	check.number("近平面 (0,0,-1) 的 NDC z = 0", ndc(glm::vec4(0.0f, 0.0f, -1.0f, 1.0f)).z, 0.0f);
+	check.number("远平面 (0,0,-100) 的 NDC z = 1", ndc(glm::vec4(0.0f, 0.0f, -100.0f, 1.0f)).z, 1.0f);
+	check.number("(1,0,-1) 的 NDC x = 1", ndc(glm::vec4(1.0f, 0.0f, -1.0f, 1.0f)).x, 1.0f);
+	check.number("(1,0,-2) 的 NDC x = 0.5(近大远小)", ndc(glm::vec4(1.0f, 0.0f, -2.0f, 1.0f)).x, 0.5f);
+
+	glm::mat4 projFlipY = proj;
+	projFlipY[1][1] *= -1.0f;
+	const glm::vec4 flipClip = projFlipY * glm::vec4(0.0f, 1.0f, -1.0f, 1.0f);
+	check.number("Y 翻转后 (0,1,-1) 的 NDC y = -1(Vulkan 风格)", (glm::vec3(flipClip) / flipClip.w).y, -1.0f);
+
+	const bool allPassed = (check.passed == check.total);
+	VWZ_LOG_INFO("MATH-CHECK SUMMARY: {}/{} passed", check.passed, check.total);
+	if (allPassed)
+	{
+		VWZ_LOG_INFO("数学验证全部通过。");
+	}
+	else
+	{
+		VWZ_LOG_ERROR("数学验证有 {} 项失败。", check.total - check.passed);
+	}
+}
+
+bool demo::Demo3::projectToViewport(const glm::mat4& mvp, const glm::vec3& p,
+	std::uint32_t width, std::uint32_t height, glm::vec2& out)
+{
+	const glm::vec4 clip = mvp * glm::vec4(p, 1.0f);
+	if (islessequal(clip.w, 1e-4f))
+	{
+		return false;
+	}
+	const glm::vec3 ndc = glm::vec3(clip) / clip.w; // 透视除法
+	out = glm::vec2((ndc.x * 0.5f + 0.5f) * static_cast<float>(width),
+		(ndc.y * 0.5f + 0.5f) * static_cast<float>(height));
+
+	return true;
+}
+
+void demo::Demo3::runCubeCheck()
+{
+	zwin::Application app{ 0, nullptr };
+
+	auto window = createDemoWindow("ZWindow — 第 3 课:向量、矩阵与齐次坐标");
+	if (window == nullptr) 
+	{
+		return;
+	}
+
+	// GDI 资源创建
+	const HWND hwnd = static_cast<HWND>(window->nativeWindow().window);
+	const HDC dc = ::GetDC(hwnd);
+	const HBRUSH background = ::CreateSolidBrush(RGB(24, 24, 32));
+	const HPEN pen = ::CreatePen(PS_SOLID, 2, RGB(120, 220, 255));
+
+	const auto startTime = std::chrono::steady_clock::now();
+	std::uint32_t frameCount = 0;
+	VWZ_LOG_INFO("开始渲染:{} 顶点 / {} 条棱线;ESC 或标题栏 X 退出", kCubeVertices.size(), kCubeEdges.size());
+
+	while (window->processEvents()) 
+	{
+		const std::uint32_t width = window->clientWidth();
+		const std::uint32_t height = window->clientHeight();
+		if (width == 0 || height == 0) 
+		{
+			::Sleep(16);
+			continue;
+		}
+
+		const float seconds = std::chrono::duration<float>(std::chrono::steady_clock::now() - startTime).count();
+
+		// 模型矩阵:绕 Y 轴匀速旋转,再固定前倾 20°
+		const glm::mat4 model = glm::rotate(glm::mat4(1.0f), seconds * 0.9f, glm::vec3(0.0f, 1.0f, 0.0f))
+			* glm::rotate(glm::mat4(1.0f), glm::radians(20.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		// 观察矩阵:相机位于 (0,0,3) 看向原点(右手系,沿 -Z 方向看)
+		const glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		// 投影矩阵:45° 视场宽;(1,1) 取负把 NDC 的 Y 轴翻成向下,与 Vulkan 约定对齐
+		glm::mat4 proj = glm::perspective(glm::radians(45.0f),
+			static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
+		proj[1][1] *= -1.0f;
+		const glm::mat4 mvp = proj * view * model;
+
+		const RECT clientRect{ 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) };
+		::FillRect(dc, &clientRect, background);
+		const HGDIOBJ oldPen = ::SelectObject(dc, pen);
+
+		std::array<glm::vec2, 8> screen{};
+		std::array<bool, 8> visible{};
+		for (std::size_t i = 0; i < kCubeVertices.size(); ++i) 
+		{
+			visible[i] = projectToViewport(mvp, kCubeVertices[i], width, height, screen[i]);
+		}
+		for (const CubeEdge& edge : kCubeEdges) 
+		{
+			if (!visible[edge.a] || !visible[edge.b]) 
+			{
+				continue; // 相机后方的点:跳过该棱
+			}
+			::MoveToEx(dc, static_cast<int>(std::lround(screen[edge.a].x)),
+				static_cast<int>(std::lround(screen[edge.a].y)), nullptr);
+			::LineTo(dc, static_cast<int>(std::lround(screen[edge.b].x)),
+				static_cast<int>(std::lround(screen[edge.b].y)));
+		}
+		::SelectObject(dc, oldPen);
+
+		++frameCount;
+		if (frameCount == 1) 
+		{
+			VWZ_LOG_INFO("首帧完成:客户区 {}x{}", width, height);
+		}
+		else if (frameCount % 240 == 0) 
+		{
+			VWZ_LOG_INFO("[演示] 第 {} 帧,旋转角 {:.0f}°,平均 {:.0f} FPS", frameCount,
+				glm::degrees(seconds * 0.9f), frameCount / seconds);
+		}
+		::Sleep(16); // ~60 FPS 节流
+	}
+
+	::DeleteObject(pen);
+	::DeleteObject(background);
+	::ReleaseDC(hwnd, dc);
+
+	VWZ_LOG_INFO("主循环退出,共渲染 {} 帧,销毁窗口", frameCount);
+}
+
+void demo::Demo3::runImpl()
+{
+	runMathCheck();
+	runCubeCheck();
+}
+=== FILE END ===
+
+=== FILE BEGIN ===
+path: src/main/src/demo/demo4.cpp
+index: 24/24
+bytes: 2116
+lines: 63
+encoding: utf-8
+bom: yes
+newline: crlf
+sha256: 4d6caa0784dd0706701485a057eb46ae8e6ab82292b3f7730293384b13f3fc50
+=== CONTENT ===
+#include <demo/demo4.h>
+#include <log.h>
+#include <instance.h>
+#include <physicaldevice.h>
+
+void demo::Demo4::runVkInfo()
+{
+	VWZ_LOG_INFO("");
+	VWZ_LOG_INFO("---- Vulkan 初始化(--vk-info) ----");
+
+	std::uint32_t runtimeVersion = 0;
+	if (vkEnumerateInstanceVersion(&runtimeVersion) == VK_SUCCESS) 
+	{
+		VWZ_LOG_INFO("运行时 API 版本: {}.{}.{}",
+		VK_API_VERSION_MAJOR(runtimeVersion),
+		VK_API_VERSION_MINOR(runtimeVersion),
+		VK_API_VERSION_PATCH(runtimeVersion));
+	}
+
+	zvk::InstanceConfig config{};
+	config.appName = "VulkanBase";
+	config.appVersion = VK_MAKE_API_VERSION(0, 0, 4, 0);
+
+	zvk::Instance instance;
+	if (!instance.create(config)) 
+	{
+		VWZ_LOG_ERROR("VK-INFO SUMMARY: instance=FAILED");
+		return;
+	}
+
+	const std::vector<zvk::PhysicalDeviceInfo> devices = zvk::enumeratePhysicalDevices(instance.handle());
+	VWZ_LOG_INFO("物理设备: {} 个", devices.size());
+	for (std::size_t i = 0; i < devices.size(); ++i) 
+	{
+		const zvk::PhysicalDeviceInfo& info = devices[i];
+		VWZ_LOG_INFO("  [{}] {}", i, info.properties.deviceName);
+		VWZ_LOG_INFO("      类型: {} | 设备 API: {} | 驱动版本: {} (厂商自定义编码)",
+			zvk::deviceTypeName(info.properties.deviceType),
+			zvk::versionText(info.properties.apiVersion),
+			info.properties.driverVersion);
+		VWZ_LOG_INFO("      队列族: {} 个", info.queueFamilies.size());
+		for (std::size_t f = 0; f < info.queueFamilies.size(); ++f) 
+		{
+			const VkQueueFamilyProperties& family = info.queueFamilies[f];
+			VWZ_LOG_INFO("        - [{}] 队列数 {} | 能力: {} | 时间戳有效位数 {}",
+				f, family.queueCount, zvk::queueFlagsText(family.queueFlags), family.timestampValidBits);
+		}
+	}
+
+	VWZ_LOG_INFO("校验层消息: {} 条错误 / {} 条警告", instance.errorCount(), instance.warningCount());
+
+	VWZ_LOG_INFO("VK-INFO SUMMARY: instance=OK validation={} devices={} surface={}",
+		instance.validationEnabled() ? "ON" : "OFF",
+		devices.size(),
+		config.enableSurfaceExtensions ? "ON" : "OFF");
+
+	instance.destroy();
+}
+
+void demo::Demo4::runImpl()
+{
+	runVkInfo();
+}
+
+=== FILE END ===
+
+================================================================================
+  附录 A: restore.ps1
+================================================================================
+  用法：把下面 BEGIN/END 之间的内容另存为 restore.ps1（UTF-8），与本文件同目录运行。
+
+------------------------------ restore.ps1 BEGIN ------------------------------
+<#
+.SYNOPSIS
+    从 vwzrender-source.txt 单文件归档中还原 vwzrender 工程。
+.EXAMPLE
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\restore.ps1
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\restore.ps1 -Destination D:\Projects\vwzrender
+#>
+param(
+    [string]$Bundle = (Join-Path $PSScriptRoot 'vwzrender-source.txt'),
+    [string]$Destination = (Join-Path $PSScriptRoot 'vwzrender')
+)
+
+$ErrorActionPreference = 'Stop'
+
+# PowerShell 7 / .NET Core 需显式注册 GBK(936) 代码页；Windows PowerShell 5.1 无此类型，忽略
+try {
+    [System.Text.Encoding]::RegisterProvider([System.Text.CodePagesEncodingProvider]::Instance)
+} catch {
+}
+
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+$Utf8Bom   = New-Object System.Text.UTF8Encoding($true)
+$Gbk       = [System.Text.Encoding]::GetEncoding(936)
+
+$MarkerBegin   = '=== FILE BEGIN ==='
+$MarkerContent = '=== CONTENT ==='
+$MarkerEnd     = '=== FILE END ==='
+
+if (-not (Test-Path -LiteralPath $Bundle)) {
+    throw "找不到归档文件: $Bundle"
+}
+
+$text  = [System.IO.File]::ReadAllText($Bundle, $Utf8NoBom)
+$lines = $text -split "`r`n|`n"
+
+$restored = 0
+$failed = 0
+$i = 0
+
+while ($i -lt $lines.Count) {
+    if ($lines[$i].Trim() -ne $MarkerBegin) { $i++; continue }
+
+    $meta = @{}
+    $i++
+    while ($i -lt $lines.Count -and $lines[$i].Trim() -ne $MarkerContent) {
+        $pos = $lines[$i].IndexOf(':')
+        if ($pos -gt 0) {
+            $key = $lines[$i].Substring(0, $pos).Trim().ToLowerInvariant()
+            $meta[$key] = $lines[$i].Substring($pos + 1).Trim()
+        }
+        $i++
+    }
+    $i++
+
+    $buffer = New-Object System.Text.StringBuilder
+    $first = $true
+    while ($i -lt $lines.Count -and $lines[$i].Trim() -ne $MarkerEnd) {
+        if (-not $first) { [void]$buffer.Append("`r`n") }
+        [void]$buffer.Append($lines[$i])
+        $first = $false
+        $i++
+    }
+    $i++
+
+    $relative = $meta['path']
+    if (-not $relative) { throw "归档第 $i 行附近的文件段缺少 path 字段，归档可能已损坏。" }
+
+    $body = $buffer.ToString()
+    if ($meta['newline'] -eq 'lf') { $body = $body -replace "`r`n", "`n" }
+
+    $encoding = if ($meta['encoding'] -eq 'gbk') { $Gbk } else { $Utf8NoBom }
+    if ($meta['bom'] -eq 'yes') { $encoding = $Utf8Bom }
+
+    $target = Join-Path $Destination $relative
+    $parent = Split-Path -Parent $target
+    if ($parent -and -not (Test-Path -LiteralPath $parent)) {
+        New-Item -ItemType Directory -Path $parent -Force | Out-Null
+    }
+    [System.IO.File]::WriteAllText($target, $body, $encoding)
+
+    $actual = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($meta['sha256'] -and $actual -ne $meta['sha256']) {
+        Write-Warning "SHA-256 不匹配: $relative (期望 $($meta['sha256'])，实际 $actual)"
+        $failed++
+    } else {
+        $restored++
+    }
+}
+
+Write-Host "已还原 $restored 个文件到: $Destination"
+if ($failed -gt 0) {
+    Write-Warning "$failed 个文件校验失败，归档可能被修改或编码被转换。"
+}
+------------------------------- restore.ps1 END -------------------------------
+
+================================================================================
+  归档结束
+================================================================================

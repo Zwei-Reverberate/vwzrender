@@ -1,0 +1,38 @@
+# 仓库内统一存 LF;签出时源码与脚本保持 LF,Windows 专属工程文件用 CRLF。
+
+* text=auto
+
+# 点文件自身
+.gitattributes     text eol=lf
+.gitignore         text eol=lf
+
+# 源码与构建脚本
+*.c                text eol=lf
+*.cc               text eol=lf
+*.cpp              text eol=lf
+*.h                text eol=lf
+*.hpp              text eol=lf
+*.cmake            text eol=lf
+CMakeLists.txt     text eol=lf
+*.md               text eol=lf
+*.json             text eol=lf
+*.yml              text eol=lf
+*.yaml             text eol=lf
+
+# Windows 专属工程文件
+*.bat              text eol=crlf
+*.cmd              text eol=crlf
+*.ps1              text eol=crlf
+*.sln              text eol=crlf
+*.vcxproj          text eol=crlf
+*.vcxproj.filters  text eol=crlf
+
+# 二进制:不做任何换行符转换
+*.png              binary
+*.jpg              binary
+*.jpeg             binary
+*.ico              binary
+*.lib              binary
+*.exe              binary
+*.dll              binary
+*.pdb              binary

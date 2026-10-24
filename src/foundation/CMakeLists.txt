@@ -1,0 +1,17 @@
+﻿project(foundation)
+
+file(GLOB_RECURSE FOUNDATION_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+)
+file(GLOB_RECURSE FOUNDATION_HEADERS CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+)
+
+add_library(${PROJECT_NAME} STATIC ${FOUNDATION_SOURCES} ${FOUNDATION_HEADERS})
+add_library(vwz::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+vwz_set_target_options(${PROJECT_NAME})
