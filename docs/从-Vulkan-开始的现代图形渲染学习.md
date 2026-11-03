@@ -6,6 +6,8 @@ toc: true
 summary: "从 Vulkan 开始的现代图形渲染学习"
 ---
 
+*[配套工程实践：vwzrender](https://github.com/Zwei-Reverberate/vwzrender)*
+
 # 1. 图形渲染的本质
 
 ## 1. 成像原理
@@ -333,7 +335,7 @@ Vulkan 的显式控制和更老的图形 API 对比主要体现在以下层面�
 
 ### 3. Vulkan 对象模型
 
-![1.1](https://raw.githubusercontent.com/Zwei-Reverberate/Blog-Images/refs/heads/master/Vulkan%20%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.1.png)
+<img src = "https://raw.githubusercontent.com/Zwei-Reverberate/Blog-Images/refs/heads/master/Vulkan%20%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.1.png">
 
 `VkInstance` 进程级唯一，代表应用与 Vulkan 建立的会话。
 
@@ -342,4 +344,22 @@ Vulkan 中所有对象都有明确的生命周期归属关系，父对象销毁�
 &nbsp;
 
 ## 7. 现代渲染引擎架构分层
+
+一个典型的引擎分层：
+
+<img src = "https://raw.githubusercontent.com/Zwei-Reverberate/Blog-Images/refs/heads/master/Vulkan%20%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.2.png"  height = 600>
+
+在 vwzrender 中，也会采用此种分层方式。
+
+&nbsp;
+
+# 2. 变换
+
+在 vwzrender 中，使用 glm 进行向量和矩阵运算。
+
+&nbsp;
+
+## 1. 向量
+
+向量是既有大小又有方向的量。
 
