@@ -9,7 +9,7 @@ int main()
 {
 	vwz::log::init();
 
-	demo::DemoBase<demo::Demo4> demo;
+	demo::DemoBase<demo::Demo3> demo;
 	demo.run();
 
 	return 0;
