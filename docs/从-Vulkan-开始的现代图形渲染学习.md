@@ -385,4 +385,54 @@ $$
 $$
 两单位向量的点乘为两向量夹角的余弦，值范围在 $[-1, 1]$，描述两单位向量的接近程度。
 
-点积技巧：
+&nbsp;
+
+**叉积**
+
+向量叉积通常只在三维欧氏空间中讨论，设向量 $\mathbf{a} = (a_x, a_y, a_y)$，$\mathbf{b} = (b_x, b_y, b_y)$，则它们的叉积为：
+$$
+\mathbf{a} \times \mathbf{b} = \begin{pmatrix} a_y b_z - a_z b_y \\ a_z b_x - a_x b_z \\ a_x b_y - a_y b_x \end{pmatrix}
+$$
+叉积结果仍为三维向量，同时有以下性质：
+
+- $\mathbf{a} \times \mathbf{b}$ 同时垂直于 $\mathbf{a}$ 和 $\mathbf{b}$
+- $\mathbf{a} \times \mathbf{b} = -(\mathbf{b} \times \mathbf{a})$
+- $|\mathbf{a} \times \mathbf{b}| = |\mathbf{a}| |\mathbf{b}| \sin\theta$，其中 $θ∈[0,π]$ 是两向量夹角
+- $\mathbf{a} \times \mathbf{a} = \mathbf{0}$
+
+&nbsp;
+
+## 2. 矩阵
+
+图形学中，矩阵是变换的数学表示。
+
+可以通俗理解为输入一个向量，经过矩阵变换后输出一个向量。本文约定使用列向量，变换写为左乘：
+$$
+\mathbf{v}' = \mathbf{M}\mathbf{v}
+$$
+什么都不做的变换矩阵是单位矩阵：
+$$
+\mathbf{I} = \begin{pmatrix} 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 1 \end{pmatrix}
+$$
+&nbsp;
+
+## 3. 线性变换
+
+线性变换是保持向量空间结构的变换，满足加法封闭性和数乘封闭性，对于任意向量 $\mathbf{u}$ 和 $\mathbf{v}$，以及线性变换 $\mathbf{A}$，有：
+$$
+A(\mathbf{u} + \mathbf{v}) = A(\mathbf{u}) + A(\mathbf{v})
+$$
+
+$$
+A(c \cdot \mathbf{u}) = c \cdot A(\mathbf{u})
+$$
+
+线性变换的几何特征的原点不动。
+
+>原点不动是指在线性变换下，向量空间的原点被映射到它自己，即 $\mathbf{A} \mathbf{0} = \mathbf{0}$；
+>
+>例如设平移变换为 $\mathbf{T} = \mathbf{x} + \mathbf{b}$，则 $\mathbf{T} \mathbf{0} = \mathbf{b} \neq \mathbf{0}$，所以平移不是线性变换。
+
+ &nbsp;
+
+**缩放**
