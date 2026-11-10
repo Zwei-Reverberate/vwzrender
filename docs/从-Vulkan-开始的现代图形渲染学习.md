@@ -379,7 +379,7 @@ const glm::vec3 a(1.0f, 2.0f, 3.0f);
 
 **点积**
 
-设向量 $\mathbf{a} = (a_x, a_y, a_y)$，$\mathbf{b} = (b_x, b_y, b_y)$，则它们的点积为：
+设向量 $\mathbf{a} = (a_x, a_y, a_z)$，$\mathbf{b} = (b_x, b_y, b_z)$，则它们的点积为：
 $$
 \mathbf{a} \cdot \mathbf{b} = a_x b_x + a_y b_y + a_z b_z = |\mathbf{a}| |\mathbf{b}| \cos\theta
 $$
@@ -399,6 +399,10 @@ $$
 - $\mathbf{a} \times \mathbf{b} = -(\mathbf{b} \times \mathbf{a})$
 - $|\mathbf{a} \times \mathbf{b}| = |\mathbf{a}| |\mathbf{b}| \sin\theta$，其中 $θ∈[0,π]$ 是两向量夹角
 - $\mathbf{a} \times \mathbf{a} = \mathbf{0}$
+
+&nbsp;
+
+叉积是赝向量；它的轴向量表示和方向定则依赖空间定向。右手系和左手系结果不同。
 
 &nbsp;
 
@@ -426,13 +430,13 @@ $$
 
 &nbsp;
 
-**齐次坐标一个重要的意义在于能够使用矩阵乘法统一处理仿射变换**。
+**齐次坐标的重要意义在于能够使用矩阵乘法统一处理仿射变换和透视投影**。
 
 &nbsp;
 
 ### 1. 线性变换
 
-线性变换是保持向量空间结构的变换，满足加法封闭性和数乘封闭性，对于任意向量 $\mathbf{u}$ 和 $\mathbf{v}$，以及线性变换 $\mathbf{A}$，有：
+线性变换是保持向量空间结构的变换，保持向量加法和数乘运算，对于任意向量 $\mathbf{u}$ 和 $\mathbf{v}$，以及线性变换 $\mathbf{A}$，有：
 $$
 A(\mathbf{u} + \mathbf{v}) = A(\mathbf{u}) + A(\mathbf{v})
 $$
@@ -443,11 +447,51 @@ $$
 
 线性变换的几何特征的原点不动。缩放、旋转、反射等是线性变换。这些变换可以使用矩阵乘法来表示。
 
->原点不动是指在线性变换下，向量空间的原点被映射到它自己，即 $\mathbf{A} \mathbf{0} = \mathbf{0}$；例如设平移变换为 $\mathbf{T} = \mathbf{x} + \mathbf{b}$，则 $\mathbf{T} \mathbf{0} = \mathbf{b} \neq \mathbf{0}$，显然也不满足加法封闭和数乘封闭性，所以平移不是线性变换。
->
+>原点不动是指在线性变换下，向量空间的原点被映射到它自己，即 $\mathbf{A} \mathbf{0} = \mathbf{0}$；例如设平移变换为 $\mathbf{T(x)} = \mathbf{x} + \mathbf{b}$，则 $\mathbf{T(0)} = \mathbf{b} \neq \mathbf{0}$，显然也不满足加法封闭和数乘封闭性，所以平移不是线性变换。
 
  &nbsp;
 
 ### 2. 仿射变换
 
-仿射变换是一类包括线性变换和平移变换的变换。
+仿射变换是一类包括线性变换和平移变换的变换。仿射变换可以用以下形式表示：
+$$
+\mathbf{v}' = A\mathbf{v} + \mathbf{T}
+$$
+其中，$A$ 是线性变换矩阵，$\mathbf{T}$ 是平移向量。仿射变换在几何意义上包括了缩放、旋转、平移和剪切变换。
+
+为了使得所有仿射变换都可以用矩阵乘法来统一处理，将 $\mathbf{v}$ 升维成齐次坐标 $(x, y, z, 1)^T$，仿射变换可以表示为 4x4 矩阵：
+$$
+M = \begin{pmatrix}
+A & \mathbf{T} \\
+\mathbf{0}^T & 1
+\end{pmatrix}
+$$
+应用该矩阵到齐次坐标上：
+$$
+\begin{pmatrix}
+A & \mathbf{T} \\
+\mathbf{0}^T & 1
+\end{pmatrix}
+\begin{pmatrix}
+x \\
+y \\
+z \\
+1
+\end{pmatrix}
+=
+\begin{pmatrix}
+A \begin{pmatrix}
+x \\
+y \\
+z
+\end{pmatrix} + \mathbf{T} \\
+1
+\end{pmatrix}
+$$
+&nbsp;
+
+## 4. 模型变换
+
+建模时常常以自身原点为中心，为局部坐标。模型变换是将对象从其本地坐标系转换到世界坐标系的过程。
+
+变换主要包括平移、旋转和缩放。
