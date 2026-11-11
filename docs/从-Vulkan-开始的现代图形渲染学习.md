@@ -495,3 +495,176 @@ $$
 建模时常常以自身原点为中心，为局部坐标。模型变换是将对象从其本地坐标系转换到世界坐标系的过程。
 
 变换主要包括平移、旋转和缩放。
+
+&nbsp;
+
+###  1. 缩放
+
+缩放变换是通过改变对象的大小来实现的。对于一个三维点 $(x, y, z)$ ，如果要在 $x$, $y$, $z$ 方向分别缩放 $S_x$、$S_y$、$S_z$ 倍，则其缩放矩阵 $\mathbf{S}$ 为：
+$$
+\mathbf{S} = \begin{pmatrix}
+S_x & 0 & 0 & 0 \\
+0 & S_y & 0 & 0 \\
+0 & 0 & S_z & 0 \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+$$
+应用该缩放矩阵后，点 $(x, y, z, 1)^T$变为：
+$$
+\begin{pmatrix}
+S_x & 0 & 0 & 0 \\
+0 & S_y & 0 & 0 \\
+0 & 0 & S_z & 0 \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+\begin{pmatrix}
+x \\
+y \\
+z \\
+1
+\end{pmatrix}
+=
+\begin{pmatrix}
+S_x \cdot x \\
+S_y \cdot y \\
+S_z \cdot z \\
+1
+\end{pmatrix}
+$$
+&nbsp;
+
+### 2. 旋转
+
+先考虑二维旋转，三维旋转是二维旋转的推广。
+
+二维旋转矩阵用于表示平面内的旋转变换。假设我们要将一个点 $(x, y)$  绕原点逆时针旋转一个角度 $\theta$。为了推导旋转矩阵，我们可以使用基本的三角函数关系。
+
+考虑一个点 $P(x, y)$  在平面上绕原点逆时针旋转 $\theta$ 后的新坐标 $P'(x', y')$。根据旋转的定义和三角函数关系，可以写出以下方程：
+$$
+x' = x \cos\theta - y \sin\theta \\
+y' = x \sin\theta + y \cos\theta
+$$
+
+----
+
+**推导**
+
+设原始点 $P(x, y)$  绕原点 $O$  旋转角度 $\theta$ 后到达新点 $P'(x', y')$。
+
+设点 $P(x, y)$ 的极坐标表示为 $(r, \phi)$，其中 $r = \sqrt{x^2 + y^2}$ 是点 $P$ 到原点的距离，$\phi$ 是点 $P$ 与 $x$ 轴正方向的夹角。
+
+则旋转角度 $\theta$ 后，新点 $P'$ 的极坐标表示为 $(r, \phi + \theta)$
+
+使用极坐标与直角坐标的转换关系，有：
+$$
+x' = r \cos(\phi + \theta) \\
+y' = r \sin(\phi + \theta)
+$$
+展开，得：
+$$
+x' = x \cos\theta - y \sin\theta \\
+y' = x \sin\theta + y \cos\theta
+$$
+
+----
+
+写成矩阵乘法形式：
+$$
+\begin{pmatrix}
+x' \\
+y'
+\end{pmatrix}
+=
+\begin{pmatrix}
+\cos\theta & -\sin\theta \\
+\sin\theta & \cos\theta
+\end{pmatrix}
+\begin{pmatrix}
+x \\
+y
+\end{pmatrix}
+$$
+二维旋转矩阵 $\mathbf{R(\theta)}$ 即：
+$$
+\mathbf{R(\theta)} = \begin{pmatrix}
+\cos\theta & -\sin\theta \\
+\sin\theta & \cos\theta
+\end{pmatrix}
+$$
+&nbsp;
+
+三维旋转变换是通过绕某个轴旋转一个角度来实现的，分别推导绕 x 轴、y 轴、 z 轴和任意轴的旋转矩阵。
+
+&nbsp;
+
+**绕 x 轴旋转**
+
+对于绕 x 轴旋转一个角度 $\theta$，旋转矩阵 $\mathbf{R_x}$ 为：
+$$
+R_x = \begin{pmatrix}
+1 & 0 & 0 & 0 \\
+0 & \cos\theta & -\sin\theta & 0 \\
+0 & \sin\theta & \cos\theta & 0 \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+$$
+应用该旋转矩阵后，点 $(x, y, z, 1)^T$ 变换为：
+$$
+\begin{pmatrix}
+1 & 0 & 0 & 0 \\
+0 & \cos\theta & -\sin\theta & 0 \\
+0 & \sin\theta & \cos\theta & 0 \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+\begin{pmatrix}
+x \\
+y \\
+z \\
+1
+\end{pmatrix} 
+= \begin{pmatrix}
+x \\
+y \cdot \cos\theta - z \cdot \sin\theta \\
+y \cdot \sin\theta + z \cdot \cos\theta \\
+1
+\end{pmatrix}
+$$
+&nbsp;
+
+**绕 y 轴旋转**
+
+对于绕 y 轴旋转一个角度 $\theta$，旋转矩阵 $\mathbf{R_y}$ 为：
+$$
+\mathbf{R_y} = \begin{pmatrix}
+\cos\theta & 0 & \sin\theta & 0 \\
+0 & 1 & 0 & 0 \\
+-\sin\theta & 0 & \cos\theta & 0 \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+$$
+应用该旋转矩阵后，点 $(x, y, z, 1)^T$ 变换为：
+$$
+\begin{pmatrix}
+\cos\theta & 0 & \sin\theta & 0 \\
+0 & 1 & 0 & 0 \\
+-\sin\theta & 0 & \cos\theta & 0 \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+\begin{pmatrix}
+x \\
+y \\
+z \\
+1
+\end{pmatrix}
+=
+\begin{pmatrix}
+x \cdot \cos\theta + z \cdot \sin\theta \\
+y \\
+-x \cdot \sin\theta + z \cdot \cos\theta \\
+1
+\end{pmatrix}
+$$
+&nbsp;
+
+&nbsp;
+
