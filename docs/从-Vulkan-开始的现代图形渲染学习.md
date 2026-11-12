@@ -666,5 +666,49 @@ y \\
 $$
 &nbsp;
 
+**绕 z 轴旋转**
+
+对于绕 z 轴旋转一个角度 $\theta$，旋转矩阵 $\mathbf{R_z}$ 为：
+$$
+\mathbf{R_z} = \begin{pmatrix}
+\cos\theta & -\sin\theta & 0 & 0 \\
+\sin\theta & \cos\theta & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+$$
+应用该旋转矩阵后，点 $(x, y, z, 1)^T$ 变为：
+$$
+\begin{pmatrix}
+\cos\theta & -\sin\theta & 0 & 0 \\
+\sin\theta & \cos\theta & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+\begin{pmatrix}
+x \\
+y \\
+z \\
+1
+\end{pmatrix}=
+\begin{pmatrix}
+x \cdot \cos\theta - y \cdot \sin\theta \\
+x \cdot \sin\theta + y \cdot \cos\theta \\
+z \\
+1
+\end{pmatrix}
+$$
 &nbsp;
+
+**绕任意轴旋转**
+
+要研究的问题为：绕经过原点且方向为单位向量 $\mathbf{u} = (u_x, u_y, u_z)$ 的轴旋转一个角度 $\theta$，计算出其变换矩阵 $\mathbf{R}$。
+
+>如果旋转轴不经过原点，设 $A$ 为旋转轴上一点，则可先将 $A$ 平移到原点，其平移矩阵为 $\mathbf{T}(-A)$，再进行旋转，最后平移回来，即变换矩阵为：$\mathbf{H} = \mathbf{T}(A) · \mathbf{R} ·\mathbf{T}(-A)$。
+
+对于 $\mathbf{R}$ 有两种计算方案，一种是将其分解为基本的三轴旋转，二是直接使用罗德里格斯公式。后者计算量更小。
+
+&nbsp;
+
+----
 
