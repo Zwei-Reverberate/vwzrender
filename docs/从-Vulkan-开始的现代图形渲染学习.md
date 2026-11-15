@@ -593,13 +593,13 @@ $$
 $$
 &nbsp;
 
-三维旋转变换是通过绕某个轴旋转一个角度来实现的，分别推导绕 x 轴、y 轴、 z 轴和任意轴的旋转矩阵。
+三维旋转变换是通过绕某个轴旋转一个角度来实现的，分别推导绕 $x$ 轴、$y$ 轴、 $z$ 轴和任意轴的旋转矩阵。
 
 &nbsp;
 
-**绕 x 轴旋转**
+**绕 $x$ 轴旋转**
 
-对于绕 x 轴旋转一个角度 $\theta$，旋转矩阵 $\mathbf{R_x}$ 为：
+对于绕 $x$ 轴旋转一个角度 $\theta$，旋转矩阵 $\mathbf{R_x}$ 为：
 $$
 R_x = \begin{pmatrix}
 1 & 0 & 0 & 0 \\
@@ -631,9 +631,9 @@ y \cdot \sin\theta + z \cdot \cos\theta \\
 $$
 &nbsp;
 
-**绕 y 轴旋转**
+**绕 $y$ 轴旋转**
 
-对于绕 y 轴旋转一个角度 $\theta$，旋转矩阵 $\mathbf{R_y}$ 为：
+对于绕 $y$ 轴旋转一个角度 $\theta$，旋转矩阵 $\mathbf{R_y}$ 为：
 $$
 \mathbf{R_y} = \begin{pmatrix}
 \cos\theta & 0 & \sin\theta & 0 \\
@@ -666,9 +666,9 @@ y \\
 $$
 &nbsp;
 
-**绕 z 轴旋转**
+**绕 $z$ 轴旋转**
 
-对于绕 z 轴旋转一个角度 $\theta$，旋转矩阵 $\mathbf{R_z}$ 为：
+对于绕 $z$ 轴旋转一个角度 $\theta$，旋转矩阵 $\mathbf{R_z}$ 为：
 $$
 \mathbf{R_z} = \begin{pmatrix}
 \cos\theta & -\sin\theta & 0 & 0 \\
@@ -708,7 +708,133 @@ $$
 
 对于 $\mathbf{R}$ 有两种计算方案，一种是将其分解为基本的三轴旋转，二是直接使用罗德里格斯公式。后者计算量更小。
 
-&nbsp;
+----
+
+**三轴旋转**
+
+首先将旋转轴对齐到某一个坐标轴，这里以 $z$ 轴为例。而将旋转轴 $\mathbf{u}$ 对齐 $z$ 轴，可以通过两个旋转实现：
+
+- 先绕 $y$ 轴旋转角度 $\beta$，使得旋转轴落在 $xz$ 平面上，$\beta = \arctan\left(\frac{u_y}{u_x}\right)$，旋转矩阵为：
+  $$
+  \mathbf{R}_y(\beta) = \begin{pmatrix}
+  \cos\beta & 0 & \sin\beta \\
+  0 & 1 & 0 \\
+  -\sin\beta & 0 & \cos\beta
+  \end{pmatrix}
+  $$
+
+- 再绕 $x$ 轴旋转角度 $\alpha$，使得旋转轴与 $z$ 轴对齐，$\alpha = \arctan\left(\frac{u_x}{u_z}\right)$，旋转矩阵为：
+  $$
+  \mathbf{R}_x(\alpha) = \begin{pmatrix}
+      1 & 0 & 0 \\
+      0 & \cos\alpha & -\sin\alpha \\
+      0 & \sin\alpha & \cos\alpha
+      \end{pmatrix}
+  $$
+
+组合上述两步旋转，得到将旋转轴对齐 $z$ 轴的矩阵：$\mathbf{R}_{align} = \mathbf{R}_x(\alpha) \mathbf{R}_y(\beta)$。
+
+现在绕 $z$ 轴旋转角度 $\theta$，旋转矩阵为：
+$$
+\mathbf{R}_z(\theta) = \begin{pmatrix}
+\cos\theta & -\sin\theta & 0 \\
+\sin\theta & \cos\theta & 0 \\
+0 & 0 & 1
+\end{pmatrix}
+$$
+最后，为了恢复旋转轴到原始位置，需要逆转之前的对齐操作，通过应用逆矩阵来实现。最终的结果为：
+$$
+\mathbf{R} = \mathbf{R}_y(-\beta) \mathbf{R}_x(-\alpha) \mathbf{R}_z(\theta) \mathbf{R}_x(\alpha) \mathbf{R}_y(\beta)
+$$
 
 ----
 
+**罗德里格斯公式**
+
+罗德里格斯公式是一种直接计算绕任意轴旋转的旋转矩阵的方法。公式如下：
+$$
+\mathbf{R(u, \theta)} = \mathbf{I} + \sin\theta \mathbf{K} + (1 - \cos\theta) \mathbf{K}^2
+$$
+其中 $\mathbf{I}$ 是 3 x 3 单位矩阵。$\mathbf{K}$ 是根据旋转轴 $\mathbf{u} = (u_x, u_y, u_z)$ 构造的反对称矩阵：
+$$
+\mathbf{K} = \begin{pmatrix}
+    0 & -u_z & u_y \\
+    u_z & 0 & -u_x \\
+    -u_y & u_x & 0
+    \end{pmatrix}
+$$
+
+带入公式，可直接得到旋转矩阵：
+$$
+\mathbf{R} = \begin{pmatrix}
+ \cos\theta + u_x^2(1 - \cos\theta) & u_x u_y (1 - \cos\theta) - u_z \sin\theta & u_x u_z (1 - \cos\theta) + u_y \sin\theta \\
+ u_y u_x (1 - \cos\theta) + u_z \sin\theta & \cos\theta + u_y^2 (1 - \cos\theta) & u_y u_z (1 - \cos\theta) - u_x \sin\theta \\
+ u_z u_x (1 - \cos\theta) - u_y \sin\theta & u_z u_y (1 - \cos\theta) + u_x \sin\theta & \cos\theta + u_z^2 (1 - \cos\theta)
+ \end{pmatrix}
+$$
+
+----
+
+### 3. 平移
+
+平移变换是通过移动对象的位置来实现的。对于一个三维点 $(x, y, z)$，如果要在 $x、y、z$ 方向分别平移 $T_x$、$T_y$、$T_z$，则其平移矩阵 $\mathbf{T}$ 为：
+$$
+\mathbf{T} = \begin{pmatrix}
+1 & 0 & 0 & T_x \\
+0 & 1 & 0 & T_y \\
+0 & 0 & 1 & T_z \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+$$
+应用该平移矩阵后，点 $(x, y, z, 1)^T$ 变为：
+$$
+\begin{pmatrix}
+1 & 0 & 0 & T_x \\
+0 & 1 & 0 & T_y \\
+0 & 0 & 1 & T_z \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+\begin{pmatrix}
+x \\
+y \\
+z \\
+1
+\end{pmatrix}
+=
+\begin{pmatrix}
+x + T_x \\
+y + T_y \\
+z + T_z \\
+1
+\end{pmatrix}
+$$
+&nbsp;
+
+&nbsp;
+
+常见的模型变换通常按照缩放、旋转、平移的顺序进行：$\mathbf{M} = \mathbf{T} \cdot \mathbf{R} \cdot \mathbf{S}$（列向量与左乘约定），但并非绝对，具体的顺序取决于实际的应用场景。
+
+&nbsp;
+
+## 5. 视图变换
+
+视图变换是将顶点从世界坐标系转换到观察坐标系（视图坐标系）的过程。由一次平移变换和一次旋转变换组成。
+
+&nbsp;
+
+**平移变换**
+
+假设相机的位置在世界坐标系中为 $C = (c_x, c_y, c_z)$。需要的平移变换矩阵 $\mathbf{T}$ 将世界坐标系原点平移到相机位置，使相机位置成为新的原点：
+$$
+\mathbf{T} = \begin{pmatrix}
+1 & 0 & 0 & -C_x \\
+0 & 1 & 0 & -C_y \\
+0 & 0 & 1 & -C_z \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+$$
+&nbsp;
+
+**旋转变换**
+
+将世界坐标系旋转到相机方向，使相机方向与视图坐标系的轴对齐。
