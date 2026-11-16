@@ -500,21 +500,21 @@ $$
 
 ###  1. 缩放
 
-缩放变换是通过改变对象的大小来实现的。对于一个三维点 $(x, y, z)$ ，如果要在 $x$, $y$, $z$ 方向分别缩放 $S_x$、$S_y$、$S_z$ 倍，则其缩放矩阵 $\mathbf{S}$ 为：
+缩放变换是通过改变对象的大小来实现的。对于一个三维点 $(x, y, z)$ ，如果要在 $x$, $y$, $z$ 方向分别缩放 $s_x$、$s_y$、$s_z$ 倍，则其缩放矩阵 $\mathbf{S}$ 为：
 $$
 \mathbf{S} = \begin{pmatrix}
-S_x & 0 & 0 & 0 \\
-0 & S_y & 0 & 0 \\
-0 & 0 & S_z & 0 \\
+s_x & 0 & 0 & 0 \\
+0 & s_y & 0 & 0 \\
+0 & 0 & s_z & 0 \\
 0 & 0 & 0 & 1
 \end{pmatrix}
 $$
 应用该缩放矩阵后，点 $(x, y, z, 1)^T$变为：
 $$
 \begin{pmatrix}
-S_x & 0 & 0 & 0 \\
-0 & S_y & 0 & 0 \\
-0 & 0 & S_z & 0 \\
+s_x & 0 & 0 & 0 \\
+0 & s_y & 0 & 0 \\
+0 & 0 & s_z & 0 \\
 0 & 0 & 0 & 1
 \end{pmatrix}
 \begin{pmatrix}
@@ -525,9 +525,9 @@ z \\
 \end{pmatrix}
 =
 \begin{pmatrix}
-S_x \cdot x \\
-S_y \cdot y \\
-S_z \cdot z \\
+s_x \cdot x \\
+s_y \cdot y \\
+s_z \cdot z \\
 1
 \end{pmatrix}
 $$
@@ -777,21 +777,21 @@ $$
 
 ### 3. 平移
 
-平移变换是通过移动对象的位置来实现的。对于一个三维点 $(x, y, z)$，如果要在 $x、y、z$ 方向分别平移 $T_x$、$T_y$、$T_z$，则其平移矩阵 $\mathbf{T}$ 为：
+平移变换是通过移动对象的位置来实现的。对于一个三维点 $(x, y, z)$，如果要在 $x、y、z$ 方向分别平移 $t_x$、$t_y$、$t_z$，则其平移矩阵 $\mathbf{T}$ 为：
 $$
 \mathbf{T} = \begin{pmatrix}
-1 & 0 & 0 & T_x \\
-0 & 1 & 0 & T_y \\
-0 & 0 & 1 & T_z \\
+1 & 0 & 0 & t_x \\
+0 & 1 & 0 & t_y \\
+0 & 0 & 1 & t_z \\
 0 & 0 & 0 & 1
 \end{pmatrix}
 $$
 应用该平移矩阵后，点 $(x, y, z, 1)^T$ 变为：
 $$
 \begin{pmatrix}
-1 & 0 & 0 & T_x \\
-0 & 1 & 0 & T_y \\
-0 & 0 & 1 & T_z \\
+1 & 0 & 0 & t_x \\
+0 & 1 & 0 & t_y \\
+0 & 0 & 1 & t_z \\
 0 & 0 & 0 & 1
 \end{pmatrix}
 \begin{pmatrix}
@@ -802,9 +802,9 @@ z \\
 \end{pmatrix}
 =
 \begin{pmatrix}
-x + T_x \\
-y + T_y \\
-z + T_z \\
+x + t_x \\
+y + t_y \\
+z + t_z \\
 1
 \end{pmatrix}
 $$
@@ -827,9 +827,9 @@ $$
 假设相机的位置在世界坐标系中为 $C = (c_x, c_y, c_z)$。需要的平移变换矩阵 $\mathbf{T}$ 将世界坐标系原点平移到相机位置，使相机位置成为新的原点：
 $$
 \mathbf{T} = \begin{pmatrix}
-1 & 0 & 0 & -C_x \\
-0 & 1 & 0 & -C_y \\
-0 & 0 & 1 & -C_z \\
+1 & 0 & 0 & -c_x \\
+0 & 1 & 0 & -c_y \\
+0 & 0 & 1 & -c_z \\
 0 & 0 & 0 & 1
 \end{pmatrix}
 $$
@@ -838,3 +838,105 @@ $$
 **旋转变换**
 
 将世界坐标系旋转到相机方向，使相机方向与视图坐标系的轴对齐。
+
+此处采用右手系的视图坐标系约定：$+x$ 轴对应相机的右方向，$+y$ 轴对应相机的上方向，相机看向 $-z$ 轴。
+
+相机的朝向由三个相互正交的单位向量决定：
+
+- 视线方向（forward）$\mathbf{f}$：
+  $$
+  \mathbf{f} = \frac{C_{target} - C}{\|C_{target} - C\|}
+  $$
+  其中 $C_{target}$ 是相机看向的目标点。
+
+- 相机右方向（right）$\mathbf{r}$：
+  $$
+  \mathbf{r} = \frac{\mathbf{f} \times \mathbf{u_{world}}}{\|\mathbf{f} \times \mathbf{u_{world}}\|}
+  $$
+  其中 $\mathbf{u_{world}}$ 是世界坐标系的上方向（通常取 $(0, 1, 0)$）。
+
+- 相机上方向（up）$\mathbf{u}$：
+  $$
+  \mathbf{u} = \mathbf{r} \times \mathbf{f}
+  $$
+
+> 另一种等价写法是取 $\mathbf{g} = C - C_{target}$（指向相机后方），此时配套公式为 $\mathbf{r} = \mathbf{u_{world}} \times \mathbf{g}$、$\mathbf{u} = \mathbf{g} \times \mathbf{r}$，旋转矩阵的第三行直接放 $\mathbf{g}$，两种写法得到的矩阵完全一致。
+>
+> 但两套公式不能混用。例如 $\mathbf{f}$ 指向目标时，若 $\mathbf{r}$ 误按 $\mathbf{u_{world}} \times \mathbf{f}$ 计算，得到的是相机的左方向；再加上第三行放的是 $\mathbf{f}$ 而非 $-\mathbf{f}$，相机看向了 $+z$——整个视图坐标系相比正确结果差一个绕 $y$ 轴的 $180^\circ$ 旋转，与后续投影变换的约定不再匹配，渲染结果会前后、左右颠倒。此外，DirectX 的传统左手约定中相机看向 $+z$，基向量的计算顺序也与此处不同，不能直接照搬。
+>
+> $\mathbf{f}$ 与 $\mathbf{u_{world}}$ 不能共线，否则叉乘得到零向量无法归一化，即相机不能正好垂直俯视或仰视，遇到这类朝向时需要另行指定一个不共线的参考上方向。
+
+----
+
+**推导**
+
+所求的旋转矩阵 $\mathbf{R}$ 应把相机的三个朝向向量分别映射到视图坐标系的对应坐标轴上，所以 $\mathbf{R}$ 需满足：
+$$
+\mathbf{R} ·\mathbf{r} = \begin{pmatrix} 1 \\ 0 \\ 0 \end{pmatrix}, \quad
+\mathbf{R} · \mathbf{u} = \begin{pmatrix} 0 \\ 1 \\ 0 \end{pmatrix}, \quad
+\mathbf{R}· (-\mathbf{f}) = \begin{pmatrix} 0 \\ 0 \\ 1 \end{pmatrix}
+$$
+将 $\mathbf{r}$、$\mathbf{u}$、$-\mathbf{f}$ 按行排成矩阵。
+
+例如当该矩阵乘以 $\mathbf{r}$ 时，三个分量分别为各行与 $\mathbf{r}$ 的点乘，由三个向量的单位正交性：
+$$
+\begin{pmatrix}
+\mathbf{r} \cdot \mathbf{r} \\
+\mathbf{u} \cdot \mathbf{r} \\
+(-\mathbf{f}) \cdot \mathbf{r}
+\end{pmatrix}
+=
+\begin{pmatrix}
+1 \\
+0 \\
+0
+\end{pmatrix}
+$$
+对 $\mathbf{u}$ 与 $-\mathbf{f}$ 同理。
+
+因此将三个基向量按行排列（写成齐次坐标下的 4 x 4 形式）即得旋转矩阵：
+$$
+\mathbf{R} = \begin{pmatrix}
+r_x & r_y & r_z & 0 \\
+u_x & u_y & u_z & 0 \\
+-f_x & -f_y & -f_z & 0 \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+$$
+
+----
+
+视图变换矩阵 $\mathbf{V}$ 是先应用平移、再应用旋转的组合（列向量与左乘约定）：
+$$
+\mathbf{V} = \mathbf{R} \cdot \mathbf{T}
+$$
+即：
+$$
+\mathbf{V} = \begin{pmatrix}
+r_x & r_y & r_z & 0 \\
+u_x & u_y & u_z & 0 \\
+-f_x & -f_y & -f_z & 0 \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+\begin{pmatrix}
+1 & 0 & 0 & -c_x \\
+0 & 1 & 0 & -c_y \\
+0 & 0 & 1 & -c_z \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+$$
+展开得：
+$$
+\mathbf{V} = \begin{pmatrix}
+r_x & r_y & r_z & -(r_x c_x + r_y c_y + r_z c_z) \\
+u_x & u_y & u_z & -(u_x c_x + u_y c_y + u_z c_z) \\
+-f_x & -f_y & -f_z & f_x c_x + f_y c_y + f_z c_z \\
+0 & 0 & 0 & 1
+\end{pmatrix}
+$$
+&nbsp;
+
+## 6. 投影变换
+
+
+
