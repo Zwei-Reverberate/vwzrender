@@ -8,7 +8,7 @@ summary: "从 Vulkan 开始的现代图形渲染学习"
 
 *[配套工程实践：vwzrender](https://github.com/Zwei-Reverberate/vwzrender)*
 
-# 1. 图形渲染的本质
+# 1. 图形渲染概述
 
 ## 1. 成像原理
 
@@ -1227,4 +1227,129 @@ $$
 不过与前文的变换不同，屏幕映射由固定功能硬件执行，视口参数通过 API 设置，不需要在着色器中构造该矩阵。
 
 &nbsp;
+
+## 9. 代码解读
+
+在 `demo3.cpp` 中进行了一系列变换验证。
+
+&nbsp;
+
+**$z$ 重映射**
+
+项目中并没有复合上文所说的 $z$ 重映射矩阵，而是通过 `addglm.cmake` 中：
+
+```cmake
+ # Vulkan 的规范化设备坐标深度范围为 [0, 1](OpenGL 传统为 [-1, 1])
+ # 该宏让 glm::perspective / glm::ortho 直接产出 Vulkan 风格深度
+ # 挂在 INTERFACE 目标上,所有链接 glm::glm 的翻译单元看到同一套数学约定(ODR 安全)
+ target_compile_definitions(glm INTERFACE GLM_FORCE_DEPTH_ZERO_TO_ONE)
+```
+
+定义了 `GLM_FORCE_DEPTH_ZERO_TO_ONE`，能够直接产出 Vulkan 的 `z∈[0,1]` 深度约定。
+
+&nbsp;
+
+**$y$ 翻转**
+
+项目中使用如下方式进行 $y$ 翻转：
+
+```c++
+glm::mat4 projFlipY = proj;
+projFlipY[1][1] *= -1.0f;
+```
+
+这并非唯一方案，以下两种方案同样能解决问题：
+
+- 负视口高度
+
+  Vulkan 允许 `VkViewport.height` 为负值（需 `VK_KHR_maintenance1` 扩展支持），表示“y 向下翻转的视口”。此时 CPU 侧矩阵保持 OpenGL 习惯不变，y 翻转由视口变换阶段吸收。
+
+- 着色器翻转
+
+  直接在顶点着色器最后一行 `gl_Position.y = -gl_Position.y;`。
+
+&nbsp;
+
+# 3. Vulkan 初始化
+
+## 1. Instance
+
+`VkInstance` 是 Vulkan 初始化流程的起点。与传统图形 API 不同，它并非全局单例。可以在同一进程内创建多个独立的 `VkInstance`，它们互不干扰。
+
+创建 `VkInstance` 需要填充 `VkInstanceCreateInfo`：
+
+```c++
+typedef struct VkInstanceCreateInfo {
+    VkStructureType          sType;
+    const void*              pNext;
+    VkInstanceCreateFlags    flags;
+    const VkApplicationInfo* pApplicationInfo;
+    uint32_t                 enabledLayerCount;
+    const char* const*       ppEnabledLayerNames;
+    uint32_t                 enabledExtensionCount;
+    const char* const*       ppEnabledExtensionNames;
+} VkInstanceCreateInfo;
+```
+
+&nbsp;
+
+**Layer**
+
+Vulkan 的 Loader 在应用与驱动（ICD）之间维护了一条调用链。层（Layer）就是被动态加载并插入这条链中的共享库，能够拦截、检查甚至修改流经的 Vulkan 函数调用。
+
+需要显式启用的层如 Validation，用于 API 捕获/追踪、扩展实现；
+
+默认自动启用的层如 Overlay，用于后处理、录屏、物理设备重排序。
+
+>`VK_LAYER_KHRONOS_validation` 是 Khronos 官方提供的标准验证层。启用它能获得全面的参数校验、对象生命周期检查、线程安全检查等能力，帮助避免 API 误用。它的开销只存在于开发调试阶段，发布版本中禁用即可，不会影响最终性能。
+
+&nbsp;
+
+**Extension**
+
+扩展（Extension）是在核心规范之外增加新功能的机制。它可以定义全新的命令、结构体、枚举值，也可以修改某些既有行为。
+
+按照作用域可分为实例拓展和设备拓展：
+
+- 实例拓展绑定整个 `VkInstance`，如 `VK_KHR_surface`，`VK_EXT_debug_utils`。
+- 设备拓展绑定单个 `VkDevice`，如 `VK_KHR_swapchain`，特定硬件特性扩展。
+
+扩展名称的前缀通常指示其来源与成熟度。如`KHR`由 Khronos 主导，通常具有跨厂商的广泛支持。而 `EXT` 代表多厂商协作，但不一定进入核心。厂商前缀如 `AMD`、`NV` 是特定厂商的硬件或驱动特性。
+
+&nbsp;
+
+|          |                          层 (Layer)                          |                       扩展 (Extension)                       |
+| -------- | :----------------------------------------------------------: | :----------------------------------------------------------: |
+| 本质     |          拦截器 / 中间件，是位于应用和驱动之间的库           |              功能模块，是 Vulkan API 规范的延伸              |
+| 作用     | 改变 API 调用的执行过程（检查、记录、修改），不能增加新的 API 命令 |   增加新的 API 命令、结构体、枚举，扩展 Vulkan 能做的事情    |
+| 提供者   |     通常由第三方（如 LunarG、GPU 厂商）提供，独立于驱动      |          通常由驱动（ICD）实现，代表硬件或平台能力           |
+| 启用时机 | 实例层在 `vkCreateInstance` 启用，设备层/全局层参与后续设备链的构建 | 实例扩展在 `vkCreateInstance` 启用，设备扩展在 `vkCreateDevice` 启用 |
+
+&nbsp;
+
+**pNext**
+
+`pNext` 是 Vulkan API 中一个核心的可扩展性机制，它的本质是一个指向单向链表的指针。在创建实例时，可将多个来自扩展的结构体串联起来，从而传递标准结构体字段无法覆盖的额外信息。
+
+`pNext` 约定，所有可链入 `pNext` 链的 Vulkan 结构体，其前两个成员的类型和顺序都是固定的：
+
+1. `VkStructureType sType`
+
+   一个枚举值，用于标识这个结构体是什么类型。如 `VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT`
+
+2. `const void*`（或 `void*`）
+
+   指针，用于指向链中的下一个结构体
+
+这条链可以不断链接，任意长度。
+
+对于 instance 创建而言，`pNext` 链主要用于传递实例级别的扩展配置，如 `VkDebugUtilsMessengerCreateInfoEXT` 或 `VkDebugReportCallbackCreateInfoEXT`，用于捕获实例创建和销毁期间产生的调试信息。`VkDirectDriverLoadingListLUNARG`，允许应用指定额外的驱动加载路径。
+
+通过 `pNext` 链入的拓展，必须同时被添加到 `ppEnabledExtensionNames` 数组中。
+
+&nbsp;
+
+
+
+
 
