@@ -57,7 +57,56 @@ void demo::Demo4::runVkInfo()
 	instance.destroy();
 }
 
+void demo::Demo4::runVkErrorTest()
+{
+	VWZ_LOG_INFO("");
+	VWZ_LOG_INFO("---- 校验层拦截演示(--vk-error-test) ----");
+
+	bool extRejected = false;
+	{
+		VWZ_LOG_INFO("第一枪:申请一个不存在的实例扩展");
+		zvk::InstanceConfig config{};
+		config.enableValidation = true;
+		config.enableSurfaceExtensions = false;
+		static constexpr const char* kMissingExtension = "VK_KHR_this_does_not_exist";
+		config.extraExtensions = { kMissingExtension };
+
+		zvk::Instance instance;
+		extRejected = !instance.create(config);
+		VWZ_LOG_INFO("  创建被拒绝: {}", extRejected ? "是 ✓" : "否 ✗(居然成功了)");
+		instance.destroy();
+	}
+
+	std::uint32_t vuidCaptured = 0;
+	bool instanceOk = false;
+	{
+		VWZ_LOG_INFO("第二枪:创建 Instance 后故意传非法参数");
+		zvk::InstanceConfig config{};
+		config.enableValidation = true;
+		config.enableSurfaceExtensions = false;
+		zvk::Instance instance;
+		instanceOk = instance.create(config);
+
+		if (instanceOk) 
+		{
+			const std::uint32_t errorsBefore = instance.errorCount();
+			// pPhysicalDeviceCount 是必需指针:传 nullptr 违反
+			// VUID-vkEnumeratePhysicalDevices-pPhysicalDeviceCount-parameter
+			const VkResult result = vkEnumeratePhysicalDevices(instance.handle(), nullptr, nullptr);
+			VWZ_LOG_INFO("  调用返回: {} ({})",
+			zvk::resultName(result), static_cast<int>(result));
+			vuidCaptured = instance.errorCount() - errorsBefore;
+			VWZ_LOG_INFO("  校验层新增错误: {} 条", vuidCaptured);
+		}
+		instance.destroy();
+	}
+
+	const bool pass = extRejected && instanceOk && vuidCaptured > 0;
+	VWZ_LOG_INFO("VK-ERROR-TEST SUMMARY: ext_rejected={} vuid_captured={}", extRejected ? 1 : 0, vuidCaptured);
+}
+
 void demo::Demo4::runImpl()
 {
 	runVkInfo();
+	runVkErrorTest();
 }

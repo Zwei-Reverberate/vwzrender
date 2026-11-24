@@ -1349,7 +1349,167 @@ Vulkan 的 Loader 在应用与驱动（ICD）之间维护了一条调用链。�
 
 &nbsp;
 
+## 2. 使用校验
 
+上文已经简单介绍 `VK_LAYER_KHRONOS_validation` 验证层。
 
+但验证层只负责检查，拦截调用、发现问题并产生消息，消息本身不会自动送到任何地方，必须启用调试扩展、注册回调，应用才能收到它们。
 
+完整的启用链路是：检查层是否可用 → 启用层与 `VK_EXT_debug_utils` 扩展 → 注册调试回调 → 创建 Messenger。
+
+&nbsp;
+
+**检查层可用性**
+
+Vulkan 的惯例是两段式查询：先取数量，再取数据。`vkEnumerateInstanceLayerProperties` 枚举本机已安装的层：
+
+```c++
+std::uint32_t count = 0;
+vkEnumerateInstanceLayerProperties(&count, nullptr);
+std::vector<VkLayerProperties> layers(count);
+vkEnumerateInstanceLayerProperties(&count, layers.data());
+```
+
+遍历比对层名，确认 `VK_LAYER_KHRONOS_validation` 是否存在。验证层只存在于开发环境，如不存在则降级为无校验运行。
+
+&nbsp;
+
+**启用层与扩展**
+
+将层名填入 `VkInstanceCreateInfo` 的 `ppEnabledLayerNames`；同时必须启用 `VK_EXT_debug_utils` 实例扩展，调试回调属于该扩展的能力，只开层不开扩展无法收到消息。链入 `pNext` 的扩展必须同时出现在 `ppEnabledExtensionNames` 中：
+
+```c++
+enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
+enabledExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+```
+
+&nbsp;
+
+**回调与 Messenger**
+
+接收消息的载体是 `VkDebugUtilsMessengerCreateInfoEXT`：`messageSeverity` 与 `messageType` 是过滤掩码，决定哪些消息进入回调；`pfnUserCallback` 指向回调函数；`pUserData` 会原样传回，通常用来取回 `this`：
+
+```c++
+VkDebugUtilsMessengerCreateInfoEXT debugInfo{};
+debugInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+debugInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+	| VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+debugInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+	| VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+	| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+debugInfo.pfnUserCallback = &Instance::handleDebugMessage;
+debugInfo.pUserData = this;
+```
+
+- `messageSeverity`：VERBOSE / INFO / WARNING / ERROR 四级
+- `messageType`：GENERAL（杂项）/ VALIDATION（违反规范）/ PERFORMANCE（性能警告）
+
+该结构有两种使用方式，覆盖的时间窗不同：
+
+1. 链入 `VkInstanceCreateInfo::pNext`：覆盖实例创建与销毁期间的消息——这个阶段 Messenger 尚不存在，`pNext` 是唯一的接收通道；
+
+2. 实例创建成功后调用 `vkCreateDebugUtilsMessengerEXT` 创建正式的 Messenger：覆盖实例的整个生命周期。
+
+>`vkCreateDebugUtilsMessengerEXT` 是扩展命令，不在核心函数表中，必须通过 `vkGetInstanceProcAddr` 动态加载。加载失败或创建失败时消息仍会输出到 stderr（验证层自身的默认行为），只是应用侧回调收不到。
+
+```c++
+const auto createMessenger = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+	vkGetInstanceProcAddr(m_instance, "vkCreateDebugUtilsMessengerEXT"));
+createMessenger(m_instance, &debugInfo, nullptr, &m_debugMessenger);
+```
+
+&nbsp;
+
+**回调实现**
+
+回调签名由扩展规定，调用约定必须是 `VKAPI_ATTR` / `VKAPI_CALL`。典型实现按严重级别分发到日志系统，并维护错误与警告的计数：
+
+```c++
+VkBool32 VKAPI_CALL handleDebugMessage(
+	VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+	VkDebugUtilsMessageTypeFlagsEXT type,
+	const VkDebugUtilsMessengerCallbackDataEXT* data, void* userData)；
+```
+
+- 返回值：`VK_FALSE` 表示只记录、不干预；返回 `VK_TRUE` 会以错误码中断本次 API 调用，仅用于想在特定违规处立即停下的调试场景。
+
+- 计数器使用 `std::atomic`：回调可能被多个线程同时触发。
+
+- `pUserData` 传回 `Instance*`，供回调更新计数与读取日志上下文。
+
+上层模块在退出前汇总这两个计数，即可确认整个初始化流程没有触发验证错误。demo4 的用法：
+
+```c++
+VWZ_LOG_INFO("校验层消息: {} 条错误 / {} 条警告", instance.errorCount(), instance.warningCount());
+```
+
+&nbsp;
+
+**销毁**
+
+`vkDestroyDebugUtilsMessengerEXT` 同样需要通过 `vkGetInstanceProcAddr` 动态加载，且必须先于 `vkDestroyInstance` 调用，Messenger 是实例的派生对象，实例销毁后其函数指针也随之失效：先销毁 Messenger，再销毁 Instance。
+
+&nbsp;
+
+## 3. 窗口系统拓展
+
+Vulkan 的核心规范是平台无关的，它没有窗口的概念。一个只依赖 Vulkan 核心 API 的应用可以把图像渲染到内存里，但无法把它显示到屏幕上。
+
+而与窗口系统的对接由一组统称 WSI（Window System Integration）的扩展完成。
+
+&nbsp;
+
+**两层设计**
+
+WSI 采用“平台无关 + 平台相关”两层结构：
+
+- `VK_KHR_surface`（实例扩展）：定义抽象的 `VkSurfaceKHR` 句柄以及后续呈现流程要用到的通用语义。它不对应任何真实窗口，而是可以呈现图像的目标。
+
+- 平台扩展：为具体窗口系统提供 surface 的创建函数，如 `VK_KHR_win32_surface`、`VK_KHR_xcb_surface`、`VK_KHR_wayland_surface`、`VK_KHR_android_surface` 等。
+
+这样拆分的收益是：surface 创建之后的全部流程（查询呈现支持、创建交换链、呈现图像）都只面向 `VkSurfaceKHR`，平台差异被压缩到创建这一处。实例创建时必须把两层的扩展名一并写入 `ppEnabledExtensionNames`，加载器要据此决定把哪些实现接进调用链，事后无法追加。
+
+项目在 Windows 上的做法（`InstanceConfig::enableSurfaceExtensions` 默认为 true）：
+
+```c++
+if (config.enableSurfaceExtensions) 
+{
+	enabledExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);      
+	enabledExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+}
+```
+
+&nbsp;
+
+**创建 Surface**
+
+以 Windows 为例，`vkCreateWin32SurfaceKHR` 需要窗口句柄与模块实例句柄：
+
+```c++
+VkWin32SurfaceCreateInfoKHR surfaceInfo{};
+surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+surfaceInfo.hinstance = hInstance;  // 模块句柄
+surfaceInfo.hwnd = hwnd;            // 窗口句柄
+
+VkSurfaceKHR surface = VK_NULL_HANDLE;
+vkCreateWin32SurfaceKHR(instance, &surfaceInfo, nullptr, &surface);
+```
+
+`hwnd` 来自应用自己的窗口系统，项目中 `window->nativeWindow().window` 。Vulkan 不会自动创建窗口，也不会与窗口系统建立隐式关联，surface 必须由应用显式创建。
+
+&nbsp;
+
+**与队列族的关系**
+
+surface 建好只代表有地方可以呈现，不代表任何队列都能往它上面呈现。设备初始化时需要检查每个队列族的呈现能力，Windows 上用：
+
+```c++
+vkGetPhysicalDeviceWin32PresentationSupportKHR(physicalDevice, queueFamilyIndex);
+```
+
+返回 `VK_TRUE` 的队列族才能用于呈现。选择物理设备与队列族时必须把“支持图形 + 支持呈现”作为条件，这是设备选择环节的任务。
+
+&nbsp;
+
+# 4. 设备与队列
 

@@ -7,6 +7,7 @@ namespace demo
 	{
 	private:
 		void runVkInfo();
+		void runVkErrorTest();
 
 	public:
 		void runImpl();
