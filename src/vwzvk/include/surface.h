@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <copymovepolicy.h>
 
 namespace zvk
 {
@@ -13,7 +14,7 @@ namespace zvk
 	std::string_view colorSpaceName(VkColorSpaceKHR colorSpace);
 	std::string extentText(const VkSurfaceCapabilitiesKHR& capabilities);
 
-	class Surface 
+	class Surface : private vwz::core::CopyMovePolicy<false>
 	{
 	public:
 		Surface() = default;

@@ -1451,7 +1451,9 @@ VWZ_LOG_INFO("校验层消息: {} 条错误 / {} 条警告", instance.errorCount
 
 &nbsp;
 
-## 3. 窗口系统拓展
+# 4. 设备与表面
+
+## 1. surface
 
 Vulkan 的核心规范是平台无关的，它没有窗口的概念。一个只依赖 Vulkan 核心 API 的应用可以把图像渲染到内存里，但无法把它显示到屏幕上。
 
@@ -1501,15 +1503,375 @@ vkCreateWin32SurfaceKHR(instance, &surfaceInfo, nullptr, &surface);
 
 **与队列族的关系**
 
-surface 建好只代表有地方可以呈现，不代表任何队列都能往它上面呈现。设备初始化时需要检查每个队列族的呈现能力，Windows 上用：
+surface 建好只代表有地方可以呈现，不代表任何队列都能往它上面呈现。设备初始化时需要检查每个队列族的呈现能力，通用查询是：
 
 ```c++
-vkGetPhysicalDeviceWin32PresentationSupportKHR(physicalDevice, queueFamilyIndex);
+VkBool32 supported = VK_FALSE;
+vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamilyIndex, surface, &supported);
 ```
 
-返回 `VK_TRUE` 的队列族才能用于呈现。选择物理设备与队列族时必须把“支持图形 + 支持呈现”作为条件，这是设备选择环节的任务。
+输出参数 `supported` 为 `VK_TRUE` 的队列族才能向这个 surface 呈现。这个查询针对具体的 surface，与平台无关。`VK_KHR_win32_surface` 另外提供了 `vkGetPhysicalDeviceWin32PresentationSupportKHR`，只按队列族回答能否向 Win32 窗口呈现，不针对具体的 surface；项目统一使用前者。选择物理设备与队列族时必须把“支持图形 + 支持呈现”作为条件。
 
 &nbsp;
 
-# 4. 设备与队列
+**创建时机与依赖关系**
+
+`vkCreateWin32SurfaceKHR` 只用到 instance、窗口句柄与模块句柄，不需要物理设备。反过来，选择物理设备时要用 surface 判断各队列族能否呈现。所以顺序只能是先创建 surface，再选择物理设备，demo5 的流程是 instance → 窗口 → surface → 枚举物理设备 → 选择：
+
+```c++
+zvk::Surface surface;
+if (!surface.create(instance.handle(), static_cast<HWND>(native.window), static_cast<HINSTANCE>(native.instance)))
+{
+	return;
+}
+
+const std::vector<zvk::PhysicalDeviceInfo> devices = zvk::enumeratePhysicalDevices(instance.handle());
+zvk::DeviceSelection selection;
+if (!zvk::selectPhysicalDevice(surface.handle(), devices, selection))
+{
+	return;
+}
+```
+
+surface 属于 instance，创建时以 instance 为参数，销毁时同样需要，所以必须先于 instance 销毁。
+
+&nbsp;
+
+**表面能力**
+
+选定物理设备之后，用 `vkGetPhysicalDeviceSurfaceCapabilitiesKHR` 查询这块设备向这个 surface 呈现时的限制：
+
+```c++
+VkSurfaceCapabilitiesKHR capabilities{};
+vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities);
+```
+
+demo5 打印了其中与交换链关系最直接的三项：
+
+- `minImageCount` / `maxImageCount`：交换链图像数量的下限与上限，`maxImageCount` 为 0 表示不设上限。
+- `currentExtent`：交换链图像应当采用的尺寸，由窗口决定；取特殊值 `0xFFFFFFFF` 时表示由应用在 `minImageExtent` 与 `maxImageExtent` 之间自行决定。
+- `minImageExtent` / `maxImageExtent`：允许的尺寸范围。
+
+项目把尺寸的文字描述封装在 `extentText` 中，两种情形分别输出：
+
+```c++
+std::string zvk::extentText(const VkSurfaceCapabilitiesKHR& capabilities)
+{
+	if (capabilities.currentExtent.width == 0xFFFFFFFFu)
+	{
+		return "decided by the application within min..max";
+	}
+	return std::format("{}x{}(decided by the surface)", capabilities.currentExtent.width, capabilities.currentExtent.height);
+}
+```
+
+&nbsp;
+
+**表面格式**
+
+`vkGetPhysicalDeviceSurfaceFormatsKHR` 返回这块设备向这个 surface 支持的格式列表。每一项是 `VkFormat` 与 `VkColorSpaceKHR` 的组合：前者描述每个通道的位宽与编码方式（`UNORM` 还是 `SRGB`），后者描述像素值如何解释成颜色（`SRGB_NONLINEAR_KHR` 即标准的 sRGB）。
+
+```c++
+std::uint32_t count = 0;
+vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &count, nullptr);
+std::vector<VkSurfaceFormatKHR> formats(count);
+vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &count, formats.data());
+```
+
+> 如果列表只有一项且 `format` 为 `VK_FORMAT_UNDEFINED`，这是通配，表示设备不限制格式，由应用自行决定。选择时通常优先 `VK_FORMAT_B8G8R8A8_SRGB` 配 `VK_COLOR_SPACE_SRGB_NONLINEAR_KHR`，没有则取列表第一项。
+
+&nbsp;
+
+**呈现模式**
+
+屏幕按固定频率逐行刷新，常见为每秒 60 次。每两次刷新之间有一小段垂直消隐期（VBLANK），此时显示器不读取新内容。
+
+垂直同步（V-Sync）指呈现引擎只在垂直消隐期切换要显示的图像，帧率被显示器的刷新率对齐，画面不会撕裂，代价是提交方可能被阻塞，帧率只能落在刷新率的整数分之一上（60、30、15）。如果不等垂直消隐期就切换图像，屏幕上半部分与下半部分可能来自两帧，出现错位、撕裂。
+
+`vkGetPhysicalDeviceSurfacePresentModesKHR` 返回设备支持的呈现模式，它决定图像何时被送到屏幕，以及是否与垂直同步绑定：
+
+- `VK_PRESENT_MODE_IMMEDIATE_KHR`：立即提交，不等垂直同步，可能出现撕裂。
+- `VK_PRESENT_MODE_MAILBOX_KHR`：垂直消隐期呈现队列中最新的一帧，丢弃过时的，不撕裂且延迟低。
+- `VK_PRESENT_MODE_FIFO_KHR`：在垂直消隐期按顺序呈现，队列满时阻塞提交方，即通常所说的垂直同步。
+- `VK_PRESENT_MODE_FIFO_RELAXED_KHR`：与 FIFO 相同，但队列为空时不等垂直消隐期，可能撕裂。
+
+> `VK_PRESENT_MODE_FIFO_KHR` 是规范唯一保证必须支持的模式，其余模式因设备而异，查询到之后才能使用。
+
+&nbsp;
+
+**查询的共同点**
+
+三组查询的参数都是“物理设备 + surface”：同一块显卡接不同的 surface，或者同一个 surface 换一块显卡，结果都可能不同。所以它们都必须在选定物理设备之后进行。此外 `currentExtent` 跟随窗口尺寸变化，窗口大小改变后需要重新查询。
+
+`Surface` 类把这些调用封装为成员函数，demo5 中的对应关系：
+
+- `vkCreateWin32SurfaceKHR` → `create`
+- `vkGetPhysicalDeviceSurfaceSupportKHR` → `supportsPresentation`
+- `vkGetPhysicalDeviceSurfaceCapabilitiesKHR` → `queryCapabilities`
+- `vkGetPhysicalDeviceSurfaceFormatsKHR` → `queryFormats`
+- `vkGetPhysicalDeviceSurfacePresentModesKHR` → `queryPresentModes`
+- `vkDestroySurfaceKHR` → `destroy`
+
+&nbsp;
+
+## 2. 队列和队列族
+
+应用不直接驱动 GPU。所有工作先录进命令缓冲，再交给队列，由队列送往硬件执行。
+
+&nbsp;
+
+**队列**
+
+`VkQueue` 是逻辑设备的对象，代表 GPU 上的一个执行通道。命令缓冲提交给队列之后才开始执行，呈现图像（`vkQueuePresentKHR`）同样经由队列。
+
+同一个队列内的命令缓冲按提交顺序执行。不同队列之间没有任何隐式的先后关系，要让一个队列的工作等待另一个队列完成，必须显式同步。
+
+&nbsp;
+
+**队列族**
+
+GPU 内部并不只有一个执行单元，三维渲染、通用计算、数据拷贝可能各有独立的硬件，能力各不相同。Vulkan 不让应用直接指定用哪个硬件，而是把设备的队列划分为若干队列族：同一族内的队列能力完全相同，能力用一组标志位描述。
+
+```c++
+std::uint32_t familyCount = 0;
+vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &familyCount, nullptr);
+std::vector<VkQueueFamilyProperties> families(familyCount);
+vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &familyCount, families.data());
+```
+
+与枚举扩展一样采用两段式调用。每一项 `VkQueueFamilyProperties` 中，选卡时最关心两个成员：
+
+- `queueFlags`：这一族的能力，是若干标志位的组合。
+- `queueCount`：这一族里有几个队列，即创建逻辑设备时最多能从这个族里取几个。
+
+与渲染相关的三个标志位：
+
+- `VK_QUEUE_GRAPHICS_BIT`：支持图形操作，即绘制图元、执行图形管线。
+- `VK_QUEUE_COMPUTE_BIT`：支持计算操作，即分发计算着色器。
+- `VK_QUEUE_TRANSFER_BIT`：支持传输操作，即缓冲与图像之间的拷贝。
+
+> 规范规定：凡是支持图形或计算操作的队列，一定也允许执行传输操作。因此一个族即使没有单独报告 `VK_QUEUE_TRANSFER_BIT`，图形和计算队列照样可以做拷贝。
+
+呈现能力不在 `queueFlags` 里。它取决于队列族与 surface 的组合，只能用上一节的 `vkGetPhysicalDeviceSurfaceSupportKHR` 逐个查询。所以图形族与呈现族是两个独立的条件，它们可以是同一个族，也可以不是。
+
+&nbsp;
+
+**队列族确定**
+
+`selectPhysicalDevice` 对每块候选设备找出三个队列族的下标，记在 `DeviceSelection` 中：
+
+- 图形族：第一个带 `VK_QUEUE_GRAPHICS_BIT` 的族。找不到就淘汰这块设备。
+- 呈现族：第一个能向目标 surface 呈现的族。找不到同样淘汰。
+- 传输族：优先选只带 `VK_QUEUE_TRANSFER_BIT`、不带图形和计算位的专用传输族；没有就退回图形族。
+
+```c++
+std::uint32_t transferFamily = graphicsFamily;
+for (std::uint32_t f = 0; f < info.queueFamilies.size(); ++f)
+{
+	const VkQueueFlags flags = info.queueFamilies[f].queueFlags;
+	if ((flags & VK_QUEUE_TRANSFER_BIT) != 0 && (flags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) == 0)
+	{
+		transferFamily = f;
+		break;
+	}
+}
+```
+
+&nbsp;
+
+**创建队列**
+
+队列不能单独创建。创建逻辑设备时用一组 `VkDeviceQueueCreateInfo` 说明在哪些族里各建几个队列，设备建好之后队列数量就不能再变。队列也不能单独销毁，随逻辑设备一起销毁。
+
+```c++
+const float queuePriority = 1.0f;
+std::vector<std::uint32_t> families{ selection.graphicsFamily };
+if (selection.presentFamily != selection.graphicsFamily)
+{
+	families.push_back(selection.presentFamily);
+}
+
+std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+for (const std::uint32_t family : families)
+{
+	VkDeviceQueueCreateInfo queueInfo{};
+	queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queueInfo.queueFamilyIndex = family;
+	queueInfo.queueCount = 1;
+	queueInfo.pQueuePriorities = &queuePriority;
+	queueCreateInfos.push_back(queueInfo);
+}
+```
+
+- `queueFamilyIndex`：队列族的下标，即查询结果数组中的下标。
+- `queueCount`：在这个族里创建几个队列，不能超过该族的 `queueCount`。
+- `pQueuePriorities`：每个队列一个 0.0 到 1.0 的值，表示提交到该队列的工作的优先级。
+
+项目对下标去重后每个族只建 1 个队列：图形族与呈现族相同时只有一个条目，不同时才有两个。传输族的判断与此同理，代码中省略。
+
+设备创建后用 `vkGetDeviceQueue` 按族下标和族内下标取回队列：
+
+```c++
+vkGetDeviceQueue(m_device, selection.graphicsFamily, 0, &m_graphicsQueue);
+if (selection.presentFamily == selection.graphicsFamily)
+{
+	m_presentQueue = m_graphicsQueue;
+}
+else
+{
+	vkGetDeviceQueue(m_device, selection.presentFamily, 0, &m_presentQueue);
+}
+```
+
+两个族相同时取回的是同一个队列，直接复用句柄即可。`Device` 把它们保存为 `graphicsQueue()`、`presentQueue()`、`transferQueue()`，demo5 创建设备后打印的就是前两个。
+
+&nbsp;
+
+## 3. device
+
+`VkDevice` 是逻辑设备，是到某块物理设备的一个连接。
+
+物理设备句柄只能用来查询，不能在上面创建资源；缓冲、图像、管线，包括队列，都属于某个逻辑设备。同一块物理设备可以创建多个逻辑设备，彼此独立。
+
+`vkCreateDevice` 决定要哪些队列、启用哪些设备扩展、启用哪些特性。三者都写在 `VkDeviceCreateInfo` 中：
+
+```c++
+typedef struct VkDeviceCreateInfo {
+    VkStructureType                    sType;
+    const void*                        pNext;
+    VkDeviceCreateFlags                flags;
+    uint32_t                           queueCreateInfoCount;
+    const VkDeviceQueueCreateInfo*     pQueueCreateInfos;
+    uint32_t                           enabledLayerCount;
+    const char* const*                 ppEnabledLayerNames;
+    uint32_t                           enabledExtensionCount;
+    const char* const*                 ppEnabledExtensionNames;
+    const VkPhysicalDeviceFeatures*    pEnabledFeatures;
+} VkDeviceCreateInfo;
+```
+
+- `pQueueCreateInfos`：要创建的队列。
+- `pNext`：要启用的特性，是一个结构体链。
+- `ppEnabledExtensionNames`：要启用的设备扩展。
+- `pEnabledFeatures`：Vulkan 1.0 的启用方式，只覆盖核心特性，已被 `pNext` 取代。
+- `enabledLayerCount` / `ppEnabledLayerNames`：遗留字段，为 0 和 `NULL`。device 层的 Layer 早已废弃，校验层是在实例上启用的。
+
+> 请求的扩展或特性只要有一项设备不支持，`vkCreateDevice` 就返回 `VK_ERROR_EXTENSION_NOT_PRESENT` 或 `VK_ERROR_FEATURE_NOT_PRESENT`。所以两者都要先查询再启用。
+
+&nbsp;
+
+**设备扩展**
+
+实例扩展随实例启用，设备扩展则针对具体的物理设备，是否可用要按设备查询。`VK_KHR_swapchain` 是其中最基本的一个，交换链把渲染结果送到 surface，能否支持取决于显卡。
+
+```c++
+std::uint32_t count = 0;
+vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &count, nullptr);
+std::vector<VkExtensionProperties> extensions(count);
+vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &count, extensions.data());
+```
+
+第二个参数是 Layer 名，已经没有意义，传 `nullptr`。项目把它封装成 `enumerateDeviceExtensions`，创建设备前把 `requestedExtensions` 中的每一项与查询结果比对，缺少任何一个就中止创建，并给出比错误码更明确的原因。
+
+&nbsp;
+
+**特性**
+
+特性是硬件可选的功能，例如几何着色器、各向异性过滤、时间线信号量，有的设备有，有的没有。它与扩展的区别在于：扩展带来新的命令和结构体，特性是已有命令上的一个开关。
+
+- 要使用某个特性，必须在创建逻辑设备时显式启用，设备建好之后不能再改。
+- 没启用的特性不能使用，否则是无效用法。
+- 有的特性有运行时代价，不要把支持的特性全部打开，用到哪个开哪个。
+
+查询与启用用的是同一套结构体，这是 `pNext` 链的典型用法：
+
+- Vulkan 1.0 的核心特性都在 `VkPhysicalDeviceFeatures` 中，用 `vkGetPhysicalDeviceFeatures` 查询。
+- 之后每个版本新增的特性各有一个结构体，例如 `VkPhysicalDeviceVulkan12Features`、`VkPhysicalDeviceVulkan13Features`。把它们链在 `VkPhysicalDeviceFeatures2` 的 `pNext` 上，用 `vkGetPhysicalDeviceFeatures2` 一次查完。
+- 启用时把同样的链挂到 `VkDeviceCreateInfo::pNext`，成员填 `VK_TRUE` 即启用。此时 `pEnabledFeatures` 必须为 `NULL`，核心特性填在 `VkPhysicalDeviceFeatures2::features`。
+
+以 `dynamicRendering` 为例，先查询：
+
+```c++
+VkPhysicalDeviceVulkan13Features available13{};
+available13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+VkPhysicalDeviceFeatures2 features2{};
+features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+features2.pNext = &available13;
+vkGetPhysicalDeviceFeatures2(physicalDevice, &features2);
+```
+
+查询返回的每个成员都表示该特性是否受支持。
+
+&nbsp;
+
+**必需与可选**
+
+查询之后要决定：特性缺失时是中止还是降级。项目两种都有：
+
+- `dynamicRendering` 是必需的，不支持就中止创建。后面的章节都依赖它，退回传统渲染过程等于写另一套代码。
+- `samplerAnisotropy`、`descriptorIndexing`、`drawIndirectCount`、`timelineSemaphore` 是可选的，不支持就告警并跳过。
+
+各特性的用途：
+
+- `samplerAnisotropy`：采样器可以使用各向异性过滤，斜视角下的贴图更清晰。
+- `descriptorIndexing`：描述符可以按运行时的索引访问，描述符数组的大小不定，是 bindless 的基础。它有一组依赖特性，必须按规范全部同时启用，项目按整组判断，缺一个就整组不启用。
+- `drawIndirectCount`：间接绘制的次数可以由 GPU 写入的计数缓冲决定。
+- `timelineSemaphore`：时间线信号量，用一个单调递增的计数值代替只能触发一次的二值信号量。
+
+`VkPhysicalDeviceVulkan13Features` 是 Vulkan 1.3 的结构体，设备版本低于 1.3 时不认识它，`dynamicRendering` 要改用 `VK_KHR_dynamic_rendering` 扩展。设备的版本取自 `VkPhysicalDeviceProperties::apiVersion`，可能低于实例的版本，所以项目在查询特性之前先检查它，低于 1.3 就中止创建，不做扩展的兼容。
+
+特性查询完毕后，按结果拼出启用链：
+
+```c++
+VkPhysicalDeviceFeatures2 features2{};
+features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+features2.features = enabledCore;
+if (features12Enabled)
+{
+	features2.pNext = &features12;
+}
+if (config.enableDynamicRendering)
+{
+	if (features12Enabled)
+	{
+		features12.pNext = &features13;
+	}
+	else
+	{
+		features2.pNext = &features13;
+	}
+}
+```
+
+链的形状随结果变化：没有任何 1.2 特性可用时 `features12` 不入链，`features13` 直接接在 `features2` 后面。
+
+&nbsp;
+
+**创建设备**
+
+```c++
+VkDeviceCreateInfo createInfo{};
+createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+createInfo.pNext = &features2;
+createInfo.queueCreateInfoCount = static_cast<std::uint32_t>(queueCreateInfos.size());
+createInfo.pQueueCreateInfos = queueCreateInfos.data();
+createInfo.enabledExtensionCount = static_cast<std::uint32_t>(requestedExtensions.size());
+createInfo.ppEnabledExtensionNames = requestedExtensions.data();
+
+const VkResult createResult = vkCreateDevice(physicalDevice, &createInfo, nullptr, &m_device);
+```
+
+> `pQueueCreateInfos` 中同一个队列族只能出现一次。图形族、呈现族、传输族有重复时要合并成一个条目
+
+创建成功后用 `vkGetDeviceQueue` 取回队列。`Device` 保存设备句柄和三个队列，对外提供 `handle()`、`graphicsQueue()`、`presentQueue()`、`transferQueue()`，与 `Instance`、`Surface` 一样不可拷贝、不可移动。
+
+&nbsp;
+
+**销毁**
+
+用设备创建的对象（交换链、缓冲、管线等）必须先于设备销毁，否则违反有效用法，且资源生命周期不可依赖。队列随设备一起销毁。
+
+`vkDeviceWaitIdle` 等价于对设备上的每个队列调用 `vkQueueWaitIdle`，阻塞到所有已提交的工作执行完毕。销毁对象之前先等设备闲置，保证 GPU 不再使用即将销毁的资源。
+
+&nbsp;
 
