@@ -1875,3 +1875,299 @@ const VkResult createResult = vkCreateDevice(physicalDevice, &createInfo, nullpt
 
 &nbsp;
 
+# 5. 命令与缓冲
+
+## 1. command
+
+在 Vulkan 中，应用不直接调用 GPU。需要先录进命令缓冲（`VkCommandBuffer`），再提交给队列。
+
+录制是 CPU 把命令写进一块内存，此时 GPU 并未做事，提交之后才开始执行。
+
+命令缓冲不能单独创建，只能从命令池里分配。
+
+&nbsp;
+
+**命令池**
+
+`VkCommandPool` 是命令缓冲的来源，负责它们的分配和回收。池属于某个逻辑设备，并且绑定一个队列族：从池里分配的命令缓冲只能提交给这个族的队列。
+
+```c++
+VkCommandPoolCreateInfo createInfo{};
+createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+createInfo.flags = flags;
+createInfo.queueFamilyIndex = queueFamily;
+
+const VkResult result = vkCreateCommandPool(device, &createInfo, nullptr, &m_pool);
+```
+
+- `queueFamilyIndex`：队列族下标。demo6 用图形族，因为提交的目标是 `graphicsQueue()`。
+- `flags`：两个标志，默认都不设。
+	- `VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT`：允许单独重置某个命令缓冲，包括重新开始录制时的隐式重置。不设的话只能用 `vkResetCommandPool` 整池重置。
+	- `VK_COMMAND_POOL_CREATE_TRANSIENT_BIT`：声明池里的命令缓冲生命周期都较短，驱动可以据此选择内存分配策略。
+
+> 命令池需要外部同步：同一时刻只能有一个线程操作一个池。多线程录制时每个线程各建一个池，这也是命令池存在的主要理由。
+
+池销毁时，从它分配的命令缓冲全部释放，不需要逐个处理；但它们不能还在执行中。
+
+&nbsp;
+
+**分配命令缓冲**
+
+```c++
+VkCommandBufferAllocateInfo allocInfo{};
+allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+allocInfo.commandPool = m_pool;
+allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+allocInfo.commandBufferCount = count;
+
+std::vector<VkCommandBuffer> buffers(count, VK_NULL_HANDLE);
+const VkResult result = vkAllocateCommandBuffers(m_device, &allocInfo, buffers.data());
+```
+
+- `level`：`PRIMARY` 可以直接提交给队列；`SECONDARY` 不能单独提交，只能被主命令缓冲执行（`vkCmdExecuteCommands`）。
+- `commandBufferCount`：一次分配几个。批量分配只要有一个失败，全部回滚并置空句柄，不会出现只分配了一半的状态。
+
+刚分配的命令缓冲处于初始状态。不用时用 `vkFreeCommandBuffers` 释放，或者等池销毁时一起回收。
+
+&nbsp;
+
+**命令缓冲的状态**
+
+一个命令缓冲在任一时刻只处于一种状态：
+
+- 初始（initial）：刚分配或刚重置，里面没有内容。
+- 录制中（recording）：`vkBeginCommandBuffer` 之后，可以往里录命令。
+- 可执行（executable）：`vkEndCommandBuffer` 之后，随时可以提交。
+- 待处理（pending）：已经提交，GPU 正在执行或等待执行。这期间不能动它。
+- 无效（invalid）：被释放，或者所属的池被重置或销毁。
+
+执行完成后命令缓冲回到可执行状态，可以原样再提交一次；要改内容就得先重置，回到初始状态。
+
+> 池没有设 `RESET_COMMAND_BUFFER` 位时，命令缓冲必须处于初始状态才能开始录制。设了之后，开始录制会顺带重置，可执行状态的缓冲可以直接重录。项目默认设这个位。
+
+&nbsp;
+
+**开始录制**
+
+```c++
+VkCommandBufferBeginInfo beginInfo{};
+beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+result = vkBeginCommandBuffer(cmd, &beginInfo);
+```
+
+`flags` 说明这块命令缓冲将如何被使用，驱动据此做优化：
+
+- `VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT`：每次录制只提交一次，之后必须重置才能再用。
+- `VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT`：处于待处理状态时也允许再次提交。与上一项互斥。
+- `VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT`：用于次级命令缓冲，说明它整个位于渲染过程内部。
+
+&nbsp;
+
+**录制命令**
+
+录制就是把命令依次写进命令缓冲。所有录制命令都以 `vkCmd` 开头，没有返回值，因为它们并不执行，只是记录。录制期间发现的错误推迟到 `vkEndCommandBuffer` 的返回值报告，所以结束录制必须检查返回值。
+
+demo6 只录了一条：
+
+```c++
+vkCmdFillBuffer(cmd, buffer.handle(), 0, VK_WHOLE_SIZE, kPattern);
+```
+
+让 GPU 用一个固定的值填满整块 buffer。
+
+> 两种 buffer 不是一回事。命令缓冲（`VkCommandBuffer`）承载的是命令；这里的 buffer（`VkBuffer`）承载的是数据，是命令的操作对象。
+
+两条规则：
+
+- 同一个命令缓冲里的命令按录制顺序执行。
+- 命令的参数在录制时就写进命令缓冲，之后修改局部变量不影响已录好的命令。但命令引用的资源必须活到执行结束，不能录完就销毁。
+
+&nbsp;
+
+**提交**
+
+```c++
+VkSubmitInfo submitInfo{};
+submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+submitInfo.commandBufferCount = 1;
+submitInfo.pCommandBuffers = &cmd;
+
+result = vkQueueSubmit(queue, 1, &submitInfo, fence);
+```
+
+- `pCommandBuffers`：要提交的命令缓冲数组，按数组顺序执行。
+- `fence`：本次提交的完成信号，下面讲。
+
+`vkQueueSubmit` 立即返回，CPU 继续往下走，GPU 在后台执行。
+
+> 提交的队列必须属于命令池所在的队列族，否则是无效用法。
+
+&nbsp;
+
+**围栏**
+
+围栏（`VkFence`）是一次提交的完成信号。创建时不带标志，处于未触发状态；随 `vkQueueSubmit` 交出去之后，队列执行完这次提交的所有命令缓冲时触发。
+
+```c++
+VkFenceCreateInfo fenceInfo{};
+fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+vkCreateFence(device, &fenceInfo, nullptr, &fence);
+
+vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX);
+```
+
+`vkWaitForFences` 阻塞到围栏触发，最后一个参数是超时时间，`UINT64_MAX` 表示一直等。
+
+等待不是可选项，GPU 还在用的命令缓冲和资源都不能释放或修改。围栏只能让 CPU 等待，粒度是整次提交。GPU 内部两项工作之间的先后（队列与队列之间、绘制与拷贝之间）用信号量和屏障。围栏可以重复使用，再次提交前先用 `vkResetFences` 复位。
+
+&nbsp;
+
+**一次性提交**
+
+`oneTimeSubmit` 把上面这套流程封装成一个函数：建围栏、分配、录制、提交、等待、释放，调用方只需要提供录制的内容。
+
+```c++
+const bool submitted = zvk::oneTimeSubmit(device.handle(), queue, pool,
+	[&buffer](VkCommandBuffer cmd) 
+	{
+		vkCmdFillBuffer(cmd, buffer.handle(), 0, VK_WHOLE_SIZE, kPattern);
+	});
+```
+
+返回时 GPU 的工作已经完成，可以放心读结果。它每次都阻塞 CPU，并且每次新建围栏、重新分配命令缓冲，所以只适合初始化阶段的少量工作，比如往显存上传数据，不适合放进每帧。
+
+`CommandPool` 是上下文对象，不可拷贝、不可移动。`allocate` 返回裸句柄，命令缓冲目前没有包装类，释放由调用方负责；在 demo6 里由 `oneTimeSubmit` 用完即释放。
+
+&nbsp;
+
+**验证 GPU 执行**
+
+demo6 的流程：
+
+- CPU 先把缓冲映射到内存，全部清零。
+- `oneTimeSubmit` 让 GPU 用 `0xABABABAB` 填充它。
+- 围栏触发后 CPU 再读回来，逐字比对。
+
+读回的每个字都等于填充值，说明命令确实被 GPU 执行过。这是第一个由 GPU 完成实际工作的程序。
+
+&nbsp;
+
+## 2. buffer
+
+`VkBuffer` 是一块给 GPU 用的存储区域，以字节为单位，按偏移访问。可以视作一个不限定元素类型的字节数组，渲染中的顶点、索引、着色器参数等都可存放在其中。
+
+&nbsp;
+
+**创建缓冲**
+
+```c++
+VkBufferCreateInfo bufferInfo{};
+bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+bufferInfo.size = size;
+bufferInfo.usage = usage;
+bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+const VkResult result = vkCreateBuffer(device, &bufferInfo, nullptr, &m_buffer);
+```
+
+- `size`：字节数，必须大于 0。
+- `usage`：声明缓冲的用途，比如 `VK_BUFFER_USAGE_TRANSFER_SRC_BIT`（拷贝的源）、`VK_BUFFER_USAGE_TRANSFER_DST_BIT`（拷贝或填充的目标）。不能为 0。之后用到缓冲的每条命令都要求对应的标志，如`vkCmdFillBuffer` 要求目标缓冲带 `TRANSFER_DST`，缺少时校验层报错。
+- `sharingMode`：`EXCLUSIVE` 表示同一时刻只被一个队列族使用；`CONCURRENT` 表示多个队列族同时使用，需要列出这些队列族。
+
+这一步只得到一个句柄，还没有任何存储。
+
+&nbsp;
+
+**内存需求**
+
+```c++
+VkMemoryRequirements requirements{};
+vkGetBufferMemoryRequirements(device, m_buffer, &requirements);
+```
+
+- `size`：这块缓冲实际需要的内存大小，可能大于创建时指定的 `size`，所以分配时用它。
+- `alignment`：缓冲在内存对象中的偏移必须满足的对齐。
+- `memoryTypeBits`：每一位对应一种内存类型，置位表示这种内存可以用于这个缓冲。
+
+&nbsp;
+
+**内存类型**
+
+```c++
+VkPhysicalDeviceMemoryProperties memProps{};
+vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
+```
+
+物理设备的内存分成若干堆（`memoryHeaps`），每个堆里再分出若干类型（`memoryTypes`）。堆是物理存储，比如显存或系统内存；类型是带属性的访问方式，用 `propertyFlags` 描述。和用途相关的几位：
+
+- `VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT`：GPU 访问最快。
+- `VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT`：可以被 CPU 映射和读写。
+- `VK_MEMORY_PROPERTY_HOST_COHERENT_BIT`：CPU 和 GPU 看到的是同一份数据，不需要手动刷新或失效缓存。
+- `VK_MEMORY_PROPERTY_HOST_CACHED_BIT`：CPU 一侧有缓存，CPU 读取较快。
+
+选内存类型要同时满足两个条件：缓冲支持它，并且它带有全部需要的属性。
+
+```c++
+const bool allowed = (typeFilter & (1u << i)) != 0;
+const bool satisfied = (memProps.memoryTypes[i].propertyFlags & properties) == properties;
+```
+
+&nbsp;
+
+**分配与绑定**
+
+```c++
+VkMemoryAllocateInfo allocInfo{};
+allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+allocInfo.allocationSize = requirements.size;
+allocInfo.memoryTypeIndex = typeIndex;
+
+vkAllocateMemory(device, &allocInfo, nullptr, &m_memory);
+vkBindBufferMemory(device, m_buffer, m_memory, 0);
+```
+
+最后一个参数是缓冲在这块内存里的起始偏移。绑定之后缓冲才能使用，并且必须完整、连续地绑定到一块内存对象上。绑定只是建立关联，不移动数据。
+
+&nbsp;
+
+**映射**
+
+```c++
+vkMapMemory(m_device, m_memory, 0, m_size, 0, &m_mapped);
+```
+
+`vkMapMemory` 把内存对象映射到进程的地址空间，返回的指针可以直接读写，GPU 通过缓冲访问的就是这块存储。内存类型必须带 `HOST_VISIBLE`。
+
+- 同一块内存不能重复映射，`vkUnmapMemory` 之后才能再次映射。
+- 它不检查 GPU 是否正在使用这块内存。CPU 读写之前，应用要保证之前提交的相关命令已经执行完，demo6 靠围栏保证这一点。
+- 没带 `HOST_COHERENT` 的内存，写入后要调 `vkFlushMappedMemoryRanges`，读取前要调 `vkInvalidateMappedMemoryRanges`。
+
+`Buffer` 用 `m_mapped` 记录当前是否已映射，`destroy` 时先解除映射，再销毁缓冲、释放内存。
+
+&nbsp;
+
+**暂存缓冲**
+
+demo6 把缓冲放在 CPU 可读写的内存里，是为了读回结果。实际使用时数据应放在 `DEVICE_LOCAL` 内存中，GPU 访问最快，但它在独立显卡上不能映射。所以 CPU 写好的数据要先放进一块可映射的暂存缓冲，再用一次拷贝命令传过去。`createWithStaging` 做的就是这件事：
+
+- 建暂存缓冲：`TRANSFER_SRC`，`HOST_VISIBLE | HOST_COHERENT`，映射后 `memcpy` 写入数据。
+- 建目标缓冲：`usage` 加上 `TRANSFER_DST`，`DEVICE_LOCAL`。
+- 录制 `vkCmdCopyBuffer`，用 `oneTimeSubmit` 提交并等待完成。
+- 暂存缓冲离开作用域，自动销毁。
+
+```c++
+const VkBufferCopy region{ 0, 0, size };
+vkCmdCopyBuffer(cmd, staging.handle(), m_buffer, 1, &region);
+```
+
+`VkBufferCopy` 的三个字段是源偏移、目标偏移和字节数。
+
+&nbsp;
+
+**所有权**
+
+`Buffer` 是资源对象，不可拷贝，可移动。移动时用 `std::exchange` 把句柄转走并清空源对象。缓冲和内存都属于逻辑设备，必须先于设备销毁。
+
+&nbsp;

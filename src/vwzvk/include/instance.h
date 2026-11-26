@@ -31,7 +31,7 @@ namespace zvk
 		std::vector<const char*> extraExtensions;
 	};
 
-	class Instance : private vwz::core:: CopyMovePolicy<false>
+	class Instance : private vwz::core:: CopyMovePolicy<Instance, false>
 	{
 	public:
 		Instance() = default;

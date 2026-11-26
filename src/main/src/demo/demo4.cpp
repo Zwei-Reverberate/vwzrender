@@ -101,7 +101,6 @@ void demo::Demo4::runVkErrorTest()
 		instance.destroy();
 	}
 
-	const bool pass = extRejected && instanceOk && vuidCaptured > 0;
 	VWZ_LOG_INFO("VK-ERROR-TEST SUMMARY: ext_rejected={} vuid_captured={}", extRejected ? 1 : 0, vuidCaptured);
 }
 

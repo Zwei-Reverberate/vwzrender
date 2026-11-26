@@ -1,25 +1,69 @@
 ﻿#pragma once
 
+#include <type_traits>
+
 namespace vwz
 {
     namespace core
     {
-        // It is recommended to use private inheritance
-        template <bool allowMove = true>
-        class  CopyMovePolicy
+        // allowMove = false : Context object. Not copyable and not movable.
+        // allowMove = true  : Resource object. Not copyable. Must support noexcept move operations.
+        template <class Derived, bool allowMove = true>
+        class CopyMovePolicy
         {
         protected:
-            constexpr  CopyMovePolicy() = default;
-            ~ CopyMovePolicy() = default;
+            constexpr CopyMovePolicy() = default;
+            ~CopyMovePolicy() noexcept
+            {
+                // Both context and resource objects must not be copyable.
+                static_assert
+                (
+                    !std::is_copy_constructible<Derived>::value,
+                    "CopyMovePolicy: Derived must not be copy constructible"
+                );
 
-             CopyMovePolicy(const  CopyMovePolicy&) = delete;
-             CopyMovePolicy& operator=(const  CopyMovePolicy&) = delete;
+                static_assert
+                (
+                    !std::is_copy_assignable<Derived>::value,
+                    "CopyMovePolicy: Derived must not be copy assignable"
+                );
 
-             CopyMovePolicy( CopyMovePolicy&&) noexcept requires(allowMove) = default;
-             CopyMovePolicy& operator=( CopyMovePolicy&&) noexcept requires(allowMove) = default;
+                if constexpr (allowMove)
+                {
+                    // Resource object: must support noexcept move operations.
+                    static_assert
+                    (
+                        std::is_nothrow_move_constructible<Derived>::value,
+                        "CopyMovePolicy: resource class must support noexcept move construction"
+                    );
 
-             CopyMovePolicy( CopyMovePolicy&&) requires(!allowMove) = delete;
-             CopyMovePolicy& operator=( CopyMovePolicy&&) requires(!allowMove) = delete;
+                    static_assert
+                    (
+                        std::is_nothrow_move_assignable<Derived>::value,
+                        "CopyMovePolicy: resource class must support noexcept move assignment"
+                    );
+                }
+                else
+                {
+                    static_assert
+                    (
+                        !std::is_move_constructible<Derived>::value,
+                        "CopyMovePolicy: context class must not be move constructible"
+                    );
+
+                    static_assert
+                    (
+                        !std::is_move_assignable<Derived>::value,
+                        "CopyMovePolicy: context class must not be move assignable"
+                    );
+                }
+            }
+
+            CopyMovePolicy(const CopyMovePolicy&) = delete;
+            CopyMovePolicy& operator=(const CopyMovePolicy&) = delete;
+
+            CopyMovePolicy(CopyMovePolicy&&) = delete;
+            CopyMovePolicy& operator=(CopyMovePolicy&&) = delete;
         };
     }
 }

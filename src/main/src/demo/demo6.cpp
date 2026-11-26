@@ -62,7 +62,7 @@ void demo::Demo6::runVkCommand()
 		VWZ_LOG_ERROR("VK-CMD SUMMARY: pool=FAILED");
 		return;
 	}
-	VWZ_LOG_INFO("[4/5] 命令池就绪: 队列族 {} 旗标=RESET_COMMAND_BUFFER", selection.graphicsFamily);
+	VWZ_LOG_INFO("命令池就绪: 队列族 {} 旗标=RESET_COMMAND_BUFFER", selection.graphicsFamily);
 
 	constexpr VkDeviceSize kFillBytes = 4096;
 	constexpr std::uint32_t kPattern = 0xABABABABu;

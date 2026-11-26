@@ -35,7 +35,7 @@ namespace zvk
 		std::vector<const char*> extraExtensions;
 	};
 
-	class Device : private vwz::core::CopyMovePolicy<false>
+	class Device : private vwz::core::CopyMovePolicy<Device, false>
 	{
 	public:
 		Device() = default;

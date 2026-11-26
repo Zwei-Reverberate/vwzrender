@@ -14,7 +14,7 @@ namespace zvk
 	std::string_view colorSpaceName(VkColorSpaceKHR colorSpace);
 	std::string extentText(const VkSurfaceCapabilitiesKHR& capabilities);
 
-	class Surface : private vwz::core::CopyMovePolicy<false>
+	class Surface : private vwz::core::CopyMovePolicy<Surface, false>
 	{
 	public:
 		Surface() = default;

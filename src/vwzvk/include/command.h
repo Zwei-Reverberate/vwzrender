@@ -7,7 +7,7 @@
 
 namespace zvk
 {
-	class CommandPool : public vwz::core::CopyMovePolicy<false>
+	class CommandPool : private vwz::core::CopyMovePolicy<CommandPool, false>
 	{
 	public:
 		CommandPool() = default;
